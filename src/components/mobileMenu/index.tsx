@@ -11,8 +11,8 @@ export function MobileMenu() {
   const currentPath = window.location.pathname;
 
   return (
-    <div className="md:hidden">
-      <button onClick={() => setOpen(true)} className="ml-4 mr-6 mt-6">
+    <div className="md:hidden border-b-2 border-gray-200">
+      <button onClick={() => setOpen(true)} className="ml-4 mr-6 mt-4">
         <IoMenu height={44} width={44} color="black" />
       </button>
       <Dialog open={open} onClose={setOpen} className="relative z-10">
