@@ -3,6 +3,7 @@ import { FaRegTrashCan } from "react-icons/fa6";
 import { useState } from "react";
 import { IoSearchOutline } from "react-icons/io5";
 import ModalExpense from "./modalExpense";
+import { LuPlus } from "react-icons/lu";
 
 export function BudgetTable() {
   const [selectedCategory, setSelectedCategory] =
@@ -55,20 +56,20 @@ export function BudgetTable() {
         </div>
 
         <div className="flex gap-2 mt-4">
-          <div className="flex items-center gap-2 border border-gray-300 bg-gray-200 rounded-md px-2 py-1 hover:bg-gray-300 duration-200">
+          <div className="flex w-full min-w-0 items-center gap-2 border border-gray-300 bg-gray-200 rounded-lg px-2 py-2 hover:bg-gray-300 duration-200 sm:flex-1">
             <IoSearchOutline width={13} height={13} />
             <input
               type="search"
               name="search"
               placeholder="Search"
-              className="appearance-none bg-transparent focus:outline-none text-sm text-gray-700"
+              className="w-full min-w-0appearance-none bg-transparent focus:outline-none text-sm text-gray-700"
             />
           </div>
 
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-gray-200 border border-gray-300 rounded-md px-2 py-1 text-sm text-gray-700 hover:bg-gray-300 duration-200"
+            className="bg-gray-200 border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-700 hover:bg-gray-300 duration-200"
           >
             {categories.map((category) => (
               <option key={category} value={category}>
@@ -77,8 +78,12 @@ export function BudgetTable() {
             ))}
           </select>
 
-          <button onClick={() => setIsExpenseModalOpen(true)}>
-            Add expense
+          <button
+            onClick={() => setIsExpenseModalOpen(true)}
+            className="bg-blue-500 text-white rounded-lg px-4 py-2 text-sm hover:bg-blue-600 duration-200 flex items-center gap-1"
+          >
+            <LuPlus />
+            Add
           </button>
 
           <ModalExpense
