@@ -7,23 +7,23 @@ export function SidebarDesktop() {
   const currentPath = window.location.pathname;
 
   return (
-    <div className="hidden md:flex flex-col w-64 h-screen bg-white border-r border-gray-200">
-      <div className="flex border-b border-gray-200 p-4">
+    <div className="hidden md:flex flex-col w-64 h-screen bg-zinc-900 border-r border-slate-700">
+      <div className="flex border-b border-slate-700 p-4">
         <div className="flex items-center justify-center w-9 h-9 bg-blue-400 rounded-md mr-4">
           <FaWallet width={13} height={13} color="white" />
         </div>
 
         <div className="flex flex-col">
-          <h1 className="text-base text-gray-700 font-medium">
+          <h1 className="text-base text-slate-100 font-medium">
             Budget manager
           </h1>
-          <p className="text-sm text-gray-500">Financial management</p>
+          <p className="text-sm text-slate-700">Financial management</p>
         </div>
       </div>
 
       <div className="flex flex-col gap-2 mt-4 px-4">
         <div
-          className={`${currentPath === "/dashboard" ? "bg-gray-200 text-blue-400" : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"} p-2 rounded-md flex gap-2 items-center justify-around`}
+          className={`${currentPath === "/dashboard" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
         >
           <div className="flex gap-2 items-center">
             <MdOutlineDashboardCustomize width={13} height={13} />
@@ -38,7 +38,7 @@ export function SidebarDesktop() {
         </div>
 
         <div
-          className={`${currentPath === "/expenses" ? "bg-gray-200 text-blue-400" : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"} p-2 rounded-md flex gap-2 items-center justify-around`}
+          className={`${currentPath === "/expenses" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
         >
           <div className="flex gap-2 items-center">
             <IoWalletOutline width={13} height={13} />

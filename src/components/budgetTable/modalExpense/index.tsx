@@ -4,19 +4,77 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { BudgetTableProps } from "..";
+import { Input } from "../../Input";
+import { v4 as uuidv4 } from "uuid";
+import { useEffect } from "react";
+import { toDateInputValue, toDisplayDate } from "../../../utils/dateFormatter";
 
 type ModalExpenseProps = {
   open: boolean;
   onClose: () => void;
+  setData: React.Dispatch<React.SetStateAction<BudgetTableProps[]>>;
+  setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
+  setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
+  editingExpense: BudgetTableProps | null;
 };
 
-export default function ModalExpense({ open, onClose }: ModalExpenseProps) {
-  const [selectedCategory, setSelectedCategory] =
-    useState<string>("Select a category");
-  const [buy, setBuy] = useState<string>("");
-  const [date, setDate] = useState<string>("");
-  const [expense, setExpense] = useState<string>("");
+const schema = z.object({
+  buy: z.string().min(1, { message: "Buy is required" }),
+  category: z.string().min(1, { message: "Category is required" }),
+  date: z.string().min(1, { message: "Date is required" }),
+  expense: z.string().min(1, { message: "Expense is required" }),
+});
+
+type FormData = z.infer<typeof schema>;
+
+export default function ModalExpense({
+  open,
+  onClose,
+  setData,
+  setSuccessMessage,
+  setErrorMessage,
+  editingExpense,
+}: ModalExpenseProps) {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      buy: "",
+      category: "Select a category",
+      date: "",
+      expense: "",
+    },
+  });
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    if (editingExpense) {
+      reset({
+        buy: editingExpense.buy,
+        category: editingExpense.category,
+        date: toDateInputValue(editingExpense.date),
+        expense: editingExpense.expense,
+      });
+    } else {
+      reset({
+        buy: "",
+        category: "Select a category",
+        date: "",
+        expense: "",
+      });
+    }
+  }, [editingExpense, reset, open]);
 
   const categories = [
     "Select a category",
@@ -30,15 +88,43 @@ export default function ModalExpense({ open, onClose }: ModalExpenseProps) {
     "Other",
   ];
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function onSubmit(data: FormData) {
+    if (data.category === "Select a category") {
+      setErrorMessage("Please select a category");
+      return;
+    }
 
-    console.log({
-      selectedCategory,
-      buy,
-      date,
-      expense,
-    });
+    if (!data.buy || !data.date || !data.expense) {
+      setErrorMessage("Please fill in all fields");
+      return;
+    }
+
+    if (editingExpense) {
+      setData((prevData) =>
+        prevData.map((item) =>
+          item.uid === editingExpense.uid
+            ? { ...item, ...data, date: toDisplayDate(data.date) }
+            : item,
+        ),
+      );
+      setSuccessMessage("Expense updated successfully");
+    } else {
+      setData((prevData) => [
+        ...prevData,
+        {
+          uid: uuidv4(),
+          buy: data.buy,
+          category: data.category,
+          date: toDisplayDate(data.date),
+          expense: data.expense,
+        },
+      ]);
+      setSuccessMessage("Expense added successfully");
+    }
+
+    setErrorMessage(null);
+    reset();
+    onClose();
   }
 
   return (
@@ -46,26 +132,26 @@ export default function ModalExpense({ open, onClose }: ModalExpenseProps) {
       <Dialog open={open} onClose={onClose} className="relative z-10">
         <DialogBackdrop
           transition
-          className="fixed inset-0 bg-gray-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+          className="fixed inset-0 bg-zinc-900/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
         />
 
         <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
             <DialogPanel
               transition
-              className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl outline -outline-offset-1 outline-white/10 transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
+              className="relative transform overflow-hidden rounded-lg bg-zinc-900 text-left shadow-xl outline -outline-offset-1 outline-white/10 transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
             >
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-200">
+              <div className="bg-zinc-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-700">
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <DialogTitle
                       as="h3"
-                      className="text-base font-semibold text-gray-700"
+                      className="text-base font-semibold text-slate-100"
                     >
-                      New expense
+                      {editingExpense ? "Edit Expense" : "Add Expense"}
                     </DialogTitle>
                     <div className="mt-1">
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-slate-400">
                         Enter the transaction details.
                       </p>
                     </div>
@@ -75,77 +161,93 @@ export default function ModalExpense({ open, onClose }: ModalExpenseProps) {
 
               <form
                 className="flex flex-col gap-2 px-4 pb-4 sm:px-6 mt-2"
-                onSubmit={handleSubmit}
+                onSubmit={handleSubmit(onSubmit)}
               >
                 <div>
-                  <label htmlFor="buy">Buy</label>
-                  <div className="flex w-full min-w-0 items-center gap-2 border border-gray-300 bg-gray-200 rounded-lg px-2 py-2 hover:bg-gray-300 duration-200 sm:flex-1">
-                    <input
-                      type="text"
-                      name="buy"
-                      value={buy}
-                      onChange={(e) => setBuy(e.target.value)}
-                      placeholder="Ex: Buy groceries"
-                      className="w-full min-w-0 appearance-none bg-transparent focus:outline-none text-sm text-gray-700"
-                    />
-                  </div>
+                  <label htmlFor="buy" className="text-sm text-slate-100">
+                    Buy
+                  </label>
+
+                  <Input
+                    type="text"
+                    placeholder="Ex: Buy groceries"
+                    name="buy"
+                    register={register}
+                    rules={{ required: "Buy is required" }}
+                    error={errors.buy?.message}
+                  />
                 </div>
 
                 <div>
-                  <label htmlFor="category">Category</label>
+                  <label htmlFor="category" className="text-sm text-slate-100">
+                    Category
+                  </label>
                   <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full min-w-0 bg-gray-200 border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-700 hover:bg-gray-300 duration-200"
+                    id="category"
+                    {...register("category")}
+                    className="w-full min-w-0 bg-zinc-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-100 hover:bg-zinc-700 duration-200"
                   >
+                    <option value="" disabled>
+                      Select a category
+                    </option>
                     {categories.map((category) => (
                       <option key={category} value={category}>
                         {category}
                       </option>
                     ))}
                   </select>
+
+                  {errors.category && (
+                    <p className="my-1 text-red-500">
+                      {errors.category.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label htmlFor="date">Date</label>
-                    <input
+                    <label htmlFor="date" className="text-sm text-slate-100">
+                      Date
+                    </label>
+                    <Input
                       type="date"
+                      placeholder="Select a date"
                       name="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="w-full min-w-0 bg-gray-200 border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-700 hover:bg-gray-300 duration-200"
+                      register={register}
+                      rules={{ required: "Date is required" }}
+                      error={errors.date?.message}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="expense">Expense</label>
-                    <input
+                    <label htmlFor="expense" className="text-sm text-slate-100">
+                      Expense
+                    </label>
+                    <Input
                       type="text"
+                      placeholder="Ex: 100.00"
                       name="expense"
-                      value={expense}
-                      onChange={(e) => setExpense(e.target.value)}
-                      placeholder="Ex: 34.90"
-                      className="w-full min-w-0 bg-gray-200 border border-gray-300 rounded-lg px-2 py-2 text-sm text-gray-700 hover:bg-gray-300 duration-200"
+                      register={register}
+                      rules={{ required: "Expense is required" }}
+                      error={errors.expense?.message}
                     />
                   </div>
                 </div>
 
-                <div className="bg-white px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                <div className="bg-zinc-900 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                   <button
-                    type="submit"
+                    type="button"
                     onClick={() => onClose()}
-                    className="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 sm:ml-3 sm:w-auto"
+                    className="inline-flex w-full justify-center rounded-md bg-zinc-800 px-3 py-2 text-sm font-semibold text-slate-100 hover:bg-zinc-700 sm:ml-3 sm:w-auto"
                   >
                     Cancel
                   </button>
                   <button
-                    type="button"
+                    type="submit"
                     data-autofocus
-                    onClick={() => onClose()}
                     className="mt-3 inline-flex w-full justify-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white inset-ring inset-ring-white/5 hover:bg-blue-600 sm:mt-0 sm:w-auto"
                   >
-                    Save
+                    {editingExpense ? "Update" : "Save"}
                   </button>
                 </div>
               </form>

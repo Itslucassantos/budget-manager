@@ -11,9 +11,9 @@ export function MobileMenu() {
   const currentPath = window.location.pathname;
 
   return (
-    <div className="md:hidden border-b-2 border-gray-200">
+    <div className="md:hidden border-b border-slate-700">
       <button onClick={() => setOpen(true)} className="ml-4 mr-6 mt-4">
-        <IoMenu height={44} width={44} color="black" />
+        <IoMenu height={44} width={44} color="white" />
       </button>
       <Dialog open={open} onClose={setOpen} className="relative z-10">
         <DialogBackdrop
@@ -28,17 +28,17 @@ export function MobileMenu() {
                 transition
                 className="pointer-events-auto relative w-screen max-w-md transform transition duration-500 ease-in-out data-closed:-translate-x-full sm:duration-700"
               >
-                <div className="relative flex h-full flex-col overflow-y-auto bg-white py-6 shadow-xl after:absolute after:inset-y-0 after:left-0 after:w-px after:bg-white/10">
-                  <div className="flex border-b border-gray-200 p-4">
+                <div className="relative flex h-full flex-col overflow-y-auto bg-zinc-900 py-6 shadow-xl after:absolute after:inset-y-0 after:left-0 after:w-px after:bg-white/10">
+                  <div className="flex border-b border-slate-700 p-4">
                     <div className="flex items-center justify-center w-9 h-9 bg-blue-400 rounded-md mr-4">
                       <FaWallet width={13} height={13} color="white" />
                     </div>
 
                     <div className="flex flex-col">
-                      <h1 className="text-base text-gray-700 font-medium">
+                      <h1 className="text-base text-slate-100 font-medium">
                         Budget manager
                       </h1>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-slate-700">
                         Financial management
                       </p>
                     </div>
@@ -46,7 +46,7 @@ export function MobileMenu() {
 
                   <div className="flex flex-col gap-2 mt-4 px-4">
                     <div
-                      className={`${currentPath === "/dashboard" ? "bg-gray-200 text-blue-400" : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"} p-2 rounded-md flex gap-2 items-center justify-around`}
+                      className={`${currentPath === "/dashboard" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
                     >
                       <div className="flex gap-2 items-center">
                         <MdOutlineDashboardCustomize width={13} height={13} />
@@ -61,7 +61,7 @@ export function MobileMenu() {
                     </div>
 
                     <div
-                      className={`${currentPath === "/expenses" ? "bg-gray-200 text-blue-400" : "text-gray-500 hover:bg-gray-200 hover:text-gray-700"} p-2 rounded-md flex gap-2 items-center justify-around`}
+                      className={`${currentPath === "/expenses" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
                     >
                       <div className="flex gap-2 items-center">
                         <IoWalletOutline width={13} height={13} />
