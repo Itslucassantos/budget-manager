@@ -1,27 +1,23 @@
 import { ImPencil } from "react-icons/im";
 import { FaRegTrashCan } from "react-icons/fa6";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { IoSearchOutline } from "react-icons/io5";
-import ModalExpense from "./modalExpense";
+import ExpenseModal from "./expenseModal";
 import { LuPlus } from "react-icons/lu";
 import toast from "react-hot-toast";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import { MdKeyboardArrowRight } from "react-icons/md";
+import { getExpenses, type ExpenseRecord } from "../../api/sheet2ApiClient";
+import DeleteModal from "./deleteModal";
 
-export interface BudgetTableProps {
-  uid: string;
-  buy: string;
-  category: string;
-  date: string;
-  expense: string;
-}
+export type BudgetTableProps = ExpenseRecord;
 
 export function BudgetTable() {
   const [data, setData] = useState<BudgetTableProps[]>([]);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<BudgetTableProps | null>(
-    null,
-  );
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [expense, setExpense] = useState<BudgetTableProps | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -33,17 +29,20 @@ export function BudgetTable() {
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   const filteredData = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
     return data.filter((item) => {
       const matchesCategory =
         selectedCategory === "Categories" || item.category === selectedCategory;
 
-      const matchesSearchTerm =
-        item.buy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.expense.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch =
+        !normalizedSearch ||
+        item.buy.toLowerCase().includes(normalizedSearch) ||
+        item.category.toLowerCase().includes(normalizedSearch) ||
+        item.date.toLowerCase().includes(normalizedSearch) ||
+        item.expense.toLowerCase().includes(normalizedSearch);
 
-      return matchesCategory && matchesSearchTerm;
+      return matchesCategory && matchesSearch;
     });
   }, [data, selectedCategory, searchTerm]);
 
@@ -95,6 +94,31 @@ export function BudgetTable() {
     "Other",
   ];
 
+  const loadExpenses = useCallback(async (signal?: AbortSignal) => {
+    try {
+      setIsLoading(true);
+      const rows = await getExpenses({
+        limit: 200,
+        signal,
+      });
+
+      setData(rows);
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) {
+        setErrorMessage("Error loading expenses");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadExpenses(controller.signal);
+
+    return () => controller.abort();
+  }, [loadExpenses]);
+
   useEffect(() => {
     if (successMessage) {
       setTimeout(() => {
@@ -114,18 +138,27 @@ export function BudgetTable() {
   }, [successMessage, errorMessage]);
 
   function handleOpenCreate() {
-    setEditingExpense(null);
+    setExpense(null);
     setIsExpenseModalOpen(true);
   }
 
   function handleOpenEdit(expense: BudgetTableProps) {
-    setEditingExpense(expense);
+    setExpense(expense);
     setIsExpenseModalOpen(true);
   }
 
   function handleCloseModal() {
     setIsExpenseModalOpen(false);
-    setEditingExpense(null);
+    setExpense(null);
+  }
+
+  function handleExpenseDeleted(expense: BudgetTableProps) {
+    setExpense(expense);
+    setIsDeleteModalOpen(true);
+  }
+
+  async function handleExpenseSaved() {
+    await loadExpenses();
   }
 
   return (
@@ -133,7 +166,9 @@ export function BudgetTable() {
       <div className="p-4 border-b border-slate-700 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <div>
           <h2 className="text-base font-medium text-slate-100">All expenses</h2>
-          <p className="text-sm text-slate-400">{data.length} transactions</p>
+          <p className="text-sm text-slate-400">
+            {filteredData.length} transactions
+          </p>
         </div>
 
         <div className="flex gap-2 mt-4">
@@ -171,18 +206,35 @@ export function BudgetTable() {
             Add
           </button>
 
-          <ModalExpense
+          <ExpenseModal
             open={isExpenseModalOpen}
             onClose={handleCloseModal}
-            setData={setData}
+            onSaved={handleExpenseSaved}
             setSuccessMessage={setSuccessMessage}
             setErrorMessage={setErrorMessage}
-            editingExpense={editingExpense}
+            editingExpense={expense}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
+
+          <DeleteModal
+            open={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            setSuccessMessage={setSuccessMessage}
+            setErrorMessage={setErrorMessage}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+            loadExpenses={loadExpenses}
+            expense={expense}
           />
         </div>
       </div>
 
-      {data.length === 0 ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center h-24 bg-zinc-900">
+          <p className="text-slate-400 text-lg">Loading transactions...</p>
+        </div>
+      ) : filteredData.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-24 bg-zinc-900">
           <p className="text-slate-400 text-lg">No transactions found</p>
         </div>
@@ -204,7 +256,10 @@ export function BudgetTable() {
               </thead>
               <tbody>
                 {paginatedData.map((row) => (
-                  <tr key={row.uid} className="hover:bg-zinc-800">
+                  <tr
+                    key={`${row.buy}-${row.category}-${row.date}-${row.expense}`}
+                    className="hover:bg-zinc-800"
+                  >
                     <td className="px-5 py-3.5 text-slate-100 text-sm font-medium border-b border-slate-700">
                       {row.buy}
                     </td>
@@ -221,7 +276,7 @@ export function BudgetTable() {
                       <button onClick={() => handleOpenEdit(row)}>
                         <ImPencil className="inline-block mr-2 hover:text-blue-500 cursor-pointer" />
                       </button>
-                      <button>
+                      <button onClick={() => handleExpenseDeleted(row)}>
                         <FaRegTrashCan className="inline-block hover:text-red-500 cursor-pointer" />
                       </button>
                     </td>
@@ -234,8 +289,8 @@ export function BudgetTable() {
           <div className="flex items-center justify-between px-4 py-3 bg-zinc-900 sm:px-6">
             <div className="text-slate-400 text-sm">
               {(currentPage - 1) * itemsPerPage + 1}-
-              {Math.min(currentPage * itemsPerPage, data.length)} of{" "}
-              {data.length}
+              {Math.min(currentPage * itemsPerPage, filteredData.length)} of{" "}
+              {filteredData.length}
             </div>
             <div className="flex justify-center items-center gap-2 mt-4">
               <button

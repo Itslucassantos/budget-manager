@@ -7,19 +7,21 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { BudgetTableProps } from "..";
+import type { BudgetTableProps } from "../index";
 import { Input } from "../../Input";
-import { v4 as uuidv4 } from "uuid";
 import { useEffect } from "react";
 import { toDateInputValue, toDisplayDate } from "../../../utils/dateFormatter";
+import { createExpense, updateExpense } from "../../../api/sheet2ApiClient";
 
-type ModalExpenseProps = {
+type ExpenseModalProps = {
   open: boolean;
   onClose: () => void;
-  setData: React.Dispatch<React.SetStateAction<BudgetTableProps[]>>;
+  onSaved: () => Promise<void>;
   setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
   setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
   editingExpense: BudgetTableProps | null;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const schema = z.object({
@@ -31,14 +33,16 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export default function ModalExpense({
+export default function ExpenseModal({
   open,
   onClose,
-  setData,
+  onSaved,
   setSuccessMessage,
   setErrorMessage,
   editingExpense,
-}: ModalExpenseProps) {
+  isLoading,
+  setIsLoading,
+}: ExpenseModalProps) {
   const {
     register,
     handleSubmit,
@@ -77,7 +81,6 @@ export default function ModalExpense({
   }, [editingExpense, reset, open]);
 
   const categories = [
-    "Select a category",
     "Food",
     "Transport",
     "Entertainment",
@@ -99,30 +102,40 @@ export default function ModalExpense({
       return;
     }
 
-    if (editingExpense) {
-      setData((prevData) =>
-        prevData.map((item) =>
-          item.uid === editingExpense.uid
-            ? { ...item, ...data, date: toDisplayDate(data.date) }
-            : item,
-        ),
-      );
-      setSuccessMessage("Expense updated successfully");
-    } else {
-      setData((prevData) => [
-        ...prevData,
-        {
-          uid: uuidv4(),
-          buy: data.buy,
-          category: data.category,
-          date: toDisplayDate(data.date),
-          expense: data.expense,
-        },
-      ]);
-      setSuccessMessage("Expense added successfully");
+    const payload = {
+      buy: data.buy,
+      category: data.category,
+      date: toDisplayDate(data.date),
+      expense: data.expense,
+    };
+
+    try {
+      if (editingExpense) {
+        setIsLoading(true);
+        await updateExpense(editingExpense, payload);
+        setSuccessMessage("Expense updated successfully");
+      } else {
+        setIsLoading(true);
+        await createExpense(payload);
+        setSuccessMessage("Expense added successfully");
+      }
+
+      await onSaved();
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "No rows matched for update"
+      ) {
+        setErrorMessage("Update not applied: original row was not found");
+      } else {
+        setErrorMessage("Unable to save expense");
+      }
+      setIsLoading(false);
+      return;
     }
 
     setErrorMessage(null);
+    setIsLoading(false);
     reset();
     onClose();
   }
@@ -245,9 +258,14 @@ export default function ModalExpense({
                   <button
                     type="submit"
                     data-autofocus
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white inset-ring inset-ring-white/5 hover:bg-blue-600 sm:mt-0 sm:w-auto"
+                    disabled={isLoading}
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white inset-ring inset-ring-white/5 hover:bg-blue-600 sm:mt-0 sm:w-auto *:disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {editingExpense ? "Update" : "Save"}
+                    {isLoading
+                      ? "Loading..."
+                      : editingExpense
+                        ? "Update"
+                        : "Save"}
                   </button>
                 </div>
               </form>
