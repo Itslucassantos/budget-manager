@@ -10,11 +10,14 @@ import { deleteExpense } from "../../../api/sheet2ApiClient";
 type DeleteModalProps = {
   open: boolean;
   onClose: () => void;
-  loadExpenses: () => Promise<void>;
+  loadExpenses: (options?: {
+    signal?: AbortSignal;
+    showListLoading?: boolean;
+  }) => Promise<void>;
   setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
   setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
-  isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  isDeleting: boolean;
+  setIsDeleting: React.Dispatch<React.SetStateAction<boolean>>;
   expense: BudgetTableProps | null;
 };
 
@@ -23,26 +26,26 @@ export default function DeleteModal({
   onClose,
   setSuccessMessage,
   setErrorMessage,
-  isLoading,
-  setIsLoading,
+  isDeleting,
+  setIsDeleting,
   loadExpenses,
   expense,
 }: DeleteModalProps) {
-  async function handleDelete(expense: BudgetTableProps) {
+  async function handleDelete() {
     if (!expense) {
       return;
     }
 
     try {
-      setIsLoading(true);
+      setIsDeleting(true);
       await deleteExpense(expense);
-      await loadExpenses();
+      await loadExpenses({ showListLoading: false });
       onClose();
       setSuccessMessage("Expense deleted successfully");
     } catch {
       setErrorMessage("Unable to delete expense");
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
     }
   }
 
@@ -88,11 +91,11 @@ export default function DeleteModal({
                   <button
                     type="button"
                     data-autofocus
-                    disabled={isLoading}
+                    disabled={isDeleting || !expense}
                     className="mt-3 inline-flex w-full justify-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white inset-ring inset-ring-white/5 hover:bg-blue-600 sm:mt-0 sm:w-auto *:disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => handleDelete(expense!)}
+                    onClick={handleDelete}
                   >
-                    {isLoading ? "Deleting..." : "Confirm"}
+                    {isDeleting ? "Deleting..." : "Confirm"}
                   </button>
                 </div>
               </div>

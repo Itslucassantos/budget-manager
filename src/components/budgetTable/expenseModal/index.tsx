@@ -20,8 +20,8 @@ type ExpenseModalProps = {
   setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
   setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
   editingExpense: BudgetTableProps | null;
-  isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  isSaving: boolean;
+  setIsSaving: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const schema = z.object({
@@ -40,8 +40,8 @@ export default function ExpenseModal({
   setSuccessMessage,
   setErrorMessage,
   editingExpense,
-  isLoading,
-  setIsLoading,
+  isSaving,
+  setIsSaving,
 }: ExpenseModalProps) {
   const {
     register,
@@ -111,11 +111,11 @@ export default function ExpenseModal({
 
     try {
       if (editingExpense) {
-        setIsLoading(true);
+        setIsSaving(true);
         await updateExpense(editingExpense, payload);
         setSuccessMessage("Expense updated successfully");
       } else {
-        setIsLoading(true);
+        setIsSaving(true);
         await createExpense(payload);
         setSuccessMessage("Expense added successfully");
       }
@@ -130,12 +130,12 @@ export default function ExpenseModal({
       } else {
         setErrorMessage("Unable to save expense");
       }
-      setIsLoading(false);
+      setIsSaving(false);
       return;
     }
 
     setErrorMessage(null);
-    setIsLoading(false);
+    setIsSaving(false);
     reset();
     onClose();
   }
@@ -258,10 +258,10 @@ export default function ExpenseModal({
                   <button
                     type="submit"
                     data-autofocus
-                    disabled={isLoading}
+                    disabled={isSaving}
                     className="mt-3 inline-flex w-full justify-center rounded-md bg-blue-500 px-3 py-2 text-sm font-semibold text-white inset-ring inset-ring-white/5 hover:bg-blue-600 sm:mt-0 sm:w-auto *:disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading
+                    {isSaving
                       ? "Loading..."
                       : editingExpense
                         ? "Update"

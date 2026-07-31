@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { FaWallet } from "react-icons/fa6";
 import { MdOutlineDashboardCustomize } from "react-icons/md";
 import { IoWalletOutline } from "react-icons/io5";
 
 export function SidebarDesktop() {
-  const currentPath = window.location.pathname;
+  const { pathname } = useLocation();
 
   return (
     <div className="hidden md:flex flex-col w-64 h-screen bg-zinc-900 border-r border-slate-700">
@@ -23,32 +23,32 @@ export function SidebarDesktop() {
 
       <div className="flex flex-col gap-2 mt-4 px-4">
         <div
-          className={`${currentPath === "/dashboard" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
+          className={`${pathname === "/dashboard" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
         >
           <div className="flex gap-2 items-center">
             <MdOutlineDashboardCustomize width={13} height={13} />
-            <Link to="/dashboard" className="font-medium text-sm">
+            <NavLink to="/dashboard" className="font-medium text-sm">
               Dashboard
-            </Link>
+            </NavLink>
           </div>
 
           <div
-            className={`${currentPath === "/dashboard" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
+            className={`${pathname === "/dashboard" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
           ></div>
         </div>
 
         <div
-          className={`${currentPath === "/expenses" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
+          className={`${pathname === "/expenses" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
         >
           <div className="flex gap-2 items-center">
             <IoWalletOutline width={13} height={13} />
-            <Link to="/expenses" className="font-medium text-sm">
+            <NavLink to="/expenses" className="font-medium text-sm">
               Expenses
-            </Link>
+            </NavLink>
           </div>
 
           <div
-            className={`${currentPath === "/expenses" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
+            className={`${pathname === "/expenses" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
           ></div>
         </div>
       </div>

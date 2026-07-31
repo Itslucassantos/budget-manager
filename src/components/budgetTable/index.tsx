@@ -1,6 +1,12 @@
 import { ImPencil } from "react-icons/im";
 import { FaRegTrashCan } from "react-icons/fa6";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { IoSearchOutline } from "react-icons/io5";
 import ExpenseModal from "./expenseModal";
 import { LuPlus } from "react-icons/lu";
@@ -17,7 +23,9 @@ export function BudgetTable() {
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [expense, setExpense] = useState<BudgetTableProps | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isListLoading, setIsListLoading] = useState(false);
+  const [isSavingExpense, setIsSavingExpense] = useState(false);
+  const [isDeletingExpense, setIsDeletingExpense] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -25,11 +33,21 @@ export function BudgetTable() {
   const [selectedCategory, setSelectedCategory] =
     useState<string>("Categories");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+  const deferredSearchTerm = useDeferredValue(debouncedSearchTerm);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
 
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 250);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
   const filteredData = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const normalizedSearch = deferredSearchTerm.trim().toLowerCase();
 
     return data.filter((item) => {
       const matchesCategory =
@@ -44,34 +62,27 @@ export function BudgetTable() {
 
       return matchesCategory && matchesSearch;
     });
-  }, [data, selectedCategory, searchTerm]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, searchTerm]);
+  }, [data, selectedCategory, deferredSearchTerm]);
 
   const itemsPerPage = 8;
 
   const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage));
+  const effectiveCurrentPage = Math.min(currentPage, totalPages);
 
   const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
+    const start = (effectiveCurrentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return filteredData.slice(start, end);
-  }, [filteredData, currentPage, itemsPerPage]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  }, [filteredData, effectiveCurrentPage, itemsPerPage]);
 
   function goToPreviousPage() {
-    setCurrentPage((prev) => Math.max(1, prev - 1));
+    setCurrentPage((prev) => Math.max(1, Math.min(prev, totalPages) - 1));
   }
 
   function goToNextPage() {
-    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+    setCurrentPage((prev) =>
+      Math.min(totalPages, Math.min(prev, totalPages) + 1),
+    );
   }
 
   const columns = [
@@ -94,34 +105,50 @@ export function BudgetTable() {
     "Other",
   ];
 
-  const loadExpenses = useCallback(async (signal?: AbortSignal) => {
-    try {
-      setIsLoading(true);
-      const rows = await getExpenses({
-        limit: 200,
-        signal,
-      });
+  const loadExpenses = useCallback(
+    async (
+      options: { signal?: AbortSignal; showListLoading?: boolean } = {},
+    ) => {
+      const { signal, showListLoading = true } = options;
 
-      setData(rows);
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError")) {
-        setErrorMessage("Error loading expenses");
+      try {
+        if (showListLoading) {
+          setIsListLoading(true);
+        }
+
+        const rows = await getExpenses({
+          limit: 200,
+          signal,
+        });
+
+        setData(rows);
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setErrorMessage("Error loading expenses");
+        }
+      } finally {
+        if (showListLoading) {
+          setIsListLoading(false);
+        }
       }
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
-    void loadExpenses(controller.signal);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadExpenses({ signal: controller.signal });
 
     return () => controller.abort();
   }, [loadExpenses]);
 
   useEffect(() => {
+    let successTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    let errorTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
     if (successMessage) {
-      setTimeout(() => {
+      successTimeoutId = setTimeout(() => {
         setSuccessMessage(null);
       }, 3000);
 
@@ -129,12 +156,22 @@ export function BudgetTable() {
     }
 
     if (errorMessage) {
-      setTimeout(() => {
+      errorTimeoutId = setTimeout(() => {
         setErrorMessage(null);
       }, 3000);
 
       toast.error(errorMessage);
     }
+
+    return () => {
+      if (successTimeoutId) {
+        clearTimeout(successTimeoutId);
+      }
+
+      if (errorTimeoutId) {
+        clearTimeout(errorTimeoutId);
+      }
+    };
   }, [successMessage, errorMessage]);
 
   function handleOpenCreate() {
@@ -158,7 +195,7 @@ export function BudgetTable() {
   }
 
   async function handleExpenseSaved() {
-    await loadExpenses();
+    await loadExpenses({ showListLoading: false });
   }
 
   return (
@@ -177,7 +214,10 @@ export function BudgetTable() {
               <IoSearchOutline width={13} height={13} />
               <input
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
                 placeholder="Search"
                 className="w-full min-w-0 appearance-none bg-transparent focus:outline-none text-sm text-slate-100"
               />
@@ -187,7 +227,10 @@ export function BudgetTable() {
           {data.length > 0 && (
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setCurrentPage(1);
+              }}
               className="bg-zinc-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-100 hover:bg-zinc-700 duration-200"
             >
               {categories.map((category) => (
@@ -213,8 +256,8 @@ export function BudgetTable() {
             setSuccessMessage={setSuccessMessage}
             setErrorMessage={setErrorMessage}
             editingExpense={expense}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
+            isSaving={isSavingExpense}
+            setIsSaving={setIsSavingExpense}
           />
 
           <DeleteModal
@@ -222,15 +265,15 @@ export function BudgetTable() {
             onClose={() => setIsDeleteModalOpen(false)}
             setSuccessMessage={setSuccessMessage}
             setErrorMessage={setErrorMessage}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
+            isDeleting={isDeletingExpense}
+            setIsDeleting={setIsDeletingExpense}
             loadExpenses={loadExpenses}
             expense={expense}
           />
         </div>
       </div>
 
-      {isLoading ? (
+      {isListLoading ? (
         <div className="flex flex-col items-center justify-center h-24 bg-zinc-900">
           <p className="text-slate-400 text-lg">Loading transactions...</p>
         </div>
@@ -257,7 +300,7 @@ export function BudgetTable() {
               <tbody>
                 {paginatedData.map((row) => (
                   <tr
-                    key={`${row.buy}-${row.category}-${row.date}-${row.expense}`}
+                    key={`${row.buy}-${row.category}-${row.date}-${row.expense}-${data.indexOf(row)}`}
                     className="hover:bg-zinc-800"
                   >
                     <td className="px-5 py-3.5 text-slate-100 text-sm font-medium border-b border-slate-700">
@@ -273,10 +316,16 @@ export function BudgetTable() {
                       {row.expense}
                     </td>
                     <td className="px-5 py-3.5 border-b border-slate-700 text-slate-100">
-                      <button onClick={() => handleOpenEdit(row)}>
+                      <button
+                        onClick={() => handleOpenEdit(row)}
+                        aria-label={`Edit expense ${row.buy}`}
+                      >
                         <ImPencil className="inline-block mr-2 hover:text-blue-500 cursor-pointer" />
                       </button>
-                      <button onClick={() => handleExpenseDeleted(row)}>
+                      <button
+                        onClick={() => handleExpenseDeleted(row)}
+                        aria-label={`Delete expense ${row.buy}`}
+                      >
                         <FaRegTrashCan className="inline-block hover:text-red-500 cursor-pointer" />
                       </button>
                     </td>
@@ -288,26 +337,29 @@ export function BudgetTable() {
 
           <div className="flex items-center justify-between px-4 py-3 bg-zinc-900 sm:px-6">
             <div className="text-slate-400 text-sm">
-              {(currentPage - 1) * itemsPerPage + 1}-
-              {Math.min(currentPage * itemsPerPage, filteredData.length)} of{" "}
-              {filteredData.length}
+              {(effectiveCurrentPage - 1) * itemsPerPage + 1}-
+              {Math.min(
+                effectiveCurrentPage * itemsPerPage,
+                filteredData.length,
+              )}{" "}
+              of {filteredData.length}
             </div>
             <div className="flex justify-center items-center gap-2 mt-4">
               <button
                 onClick={goToPreviousPage}
-                disabled={currentPage === 1}
+                disabled={effectiveCurrentPage === 1}
                 className="bg-zinc-900 text-slate-400 rounded-lg px-2 py-2 text-sm hover:bg-zinc-700 duration-200"
               >
                 <MdKeyboardArrowLeft width={24} height={24} />
               </button>
 
               <div className="text-slate-400 text-sm">
-                {currentPage} of {totalPages}
+                {effectiveCurrentPage} of {totalPages}
               </div>
 
               <button
                 onClick={goToNextPage}
-                disabled={currentPage === totalPages}
+                disabled={effectiveCurrentPage === totalPages}
                 className="bg-zinc-900 text-slate-400 rounded-lg px-2 py-2 text-sm hover:bg-zinc-700 duration-200"
               >
                 <MdKeyboardArrowRight width={24} height={24} />

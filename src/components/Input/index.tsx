@@ -1,22 +1,27 @@
-import type { RegisterOptions, UseFormRegister } from "react-hook-form";
+import type {
+  FieldValues,
+  Path,
+  RegisterOptions,
+  UseFormRegister,
+} from "react-hook-form";
 
-interface InputProps {
+interface InputProps<T extends FieldValues> {
   type: string;
   placeholder: string;
-  name: string;
-  register: UseFormRegister<any>;
+  name: Path<T>;
+  register: UseFormRegister<T>;
   error?: string;
-  rules?: RegisterOptions;
+  rules?: RegisterOptions<T, Path<T>>;
 }
 
-export function Input({
+export function Input<T extends FieldValues>({
   name,
   placeholder,
   type,
   register,
   rules,
   error,
-}: InputProps) {
+}: InputProps<T>) {
   return (
     <div>
       <input
