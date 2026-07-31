@@ -8,7 +8,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { BudgetTableProps } from "../index";
-import { Input } from "../../Input";
+import { Input } from "../../input";
 import { useEffect } from "react";
 import { toDateInputValue, toDisplayDate } from "../../../utils/dateFormatter";
 import { createExpense, updateExpense } from "../../../api/sheet2ApiClient";
