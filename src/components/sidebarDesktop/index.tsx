@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { FaWallet } from "react-icons/fa6";
 import { MdOutlineDashboardCustomize } from "react-icons/md";
-import { IoWalletOutline } from "react-icons/io5";
+import { IoSettingsOutline, IoWalletOutline } from "react-icons/io5";
 
 export function SidebarDesktop() {
   const { pathname } = useLocation();
@@ -49,6 +49,21 @@ export function SidebarDesktop() {
 
           <div
             className={`${pathname === "/expenses" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
+          ></div>
+        </div>
+
+        <div
+          className={`${pathname === "/settings" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
+        >
+          <div className="flex gap-2 items-center">
+            <IoSettingsOutline width={13} height={13} />
+            <NavLink to="/settings" className="font-medium text-sm">
+              Settings
+            </NavLink>
+          </div>
+
+          <div
+            className={`${pathname === "/settings" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
           ></div>
         </div>
       </div>
