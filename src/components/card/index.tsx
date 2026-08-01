@@ -1,7 +1,7 @@
 interface CardProps {
   title: string;
   price?: string;
-  buyNumber?: number;
+  shoppingNumber?: number;
   icon: React.ReactNode;
   description: string;
 }
@@ -9,7 +9,7 @@ interface CardProps {
 export function Card({
   title,
   price,
-  buyNumber,
+  shoppingNumber,
   icon,
   description,
 }: CardProps) {
@@ -23,7 +23,7 @@ export function Card({
       {price ? (
         <div className="text-slate-100 text-xl font-bold">{price}</div>
       ) : (
-        <div className="text-slate-100 text-xl font-bold">{buyNumber}</div>
+        <div className="text-slate-100 text-xl font-bold">{shoppingNumber}</div>
       )}
       <div className="text-slate-400 text-sm">{description}</div>
     </div>
