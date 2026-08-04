@@ -137,7 +137,7 @@ export function BudgetTable() {
 
   useEffect(() => {
     const controller = new AbortController();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     void loadExpenses({ signal: controller.signal });
 
     return () => controller.abort();

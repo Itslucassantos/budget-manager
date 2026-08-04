@@ -7,13 +7,17 @@ import { HiMiniArrowTrendingUp } from "react-icons/hi2";
 import { RiBarChartFill } from "react-icons/ri";
 import { RiShoppingCartFill } from "react-icons/ri";
 import { FaTag } from "react-icons/fa6";
+import { MonthlySchedule } from "../../components/monthlySchedule";
 
 export function Dashboard() {
-  const budget = `R$ 1000,00`;
+  const budget = `R$ 5000,00`;
   const remainingBalance = `R$ 500,00`;
   const averageTicketValue = `R$ 50,00`;
   const totalSpent = `R$ 500,00`;
-  const porcentageSpent = `50%`;
+  const porcentageSpent =
+    budget && totalSpent
+      ? `${((parseFloat(totalSpent.replace("R$ ", "").replace(",", ".")) / parseFloat(budget.replace("R$ ", "").replace(",", "."))) * 100).toFixed(2)}%`
+      : "0%";
   const shoppingNumber = 10;
   const topCategory = "Electronics";
 
@@ -100,6 +104,38 @@ export function Dashboard() {
             description="Most purchased category"
             icon={<FaTag height={13} width={13} className="text-green-300" />}
           />
+        </div>
+
+        <div className="bg-zinc-900 rounded-lg p-4 border border-slate-700 mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-base text-slate-100 font-medium">
+              Use of the budget
+            </p>
+            <div className="text-base text-slate-400">
+              {totalSpent} of {budget}
+            </div>
+          </div>
+
+          <div className="mb-2">
+            <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full"
+                style={{ width: porcentageSpent }}
+              ></div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-400">{porcentageSpent} used</p>
+
+            <div className="text-sm text-slate-400">
+              {remainingBalance} remaining
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <MonthlySchedule />
         </div>
       </div>
     </div>
