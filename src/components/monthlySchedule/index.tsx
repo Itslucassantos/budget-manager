@@ -1,77 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { getExpenses, type ExpenseRecord } from "../../api/sheet2ApiClient";
-
-type MonthlyExpense = {
-  monthLabel: string;
-  total: number;
-};
-
-function parseExpense(value: string): number {
-  const raw = value.replace(/\s+/g, "").replace("R$", "");
-
-  if (!raw) {
-    return 0;
-  }
-
-  const hasComma = raw.includes(",");
-  const hasDot = raw.includes(".");
-  let normalized = raw;
-
-  if (hasComma && hasDot) {
-    normalized = raw.replace(/\./g, "").replace(",", ".");
-  } else if (hasComma) {
-    normalized = raw.replace(",", ".");
-  }
-
-  const parsed = Number(normalized);
-
-  if (Number.isNaN(parsed)) {
-    return 0;
-  }
-
-  return parsed;
-}
-
-function parseDate(value: string): Date | null {
-  if (!value) {
-    return null;
-  }
-
-  if (value.includes("/")) {
-    const [day, month, year] = value.split("/");
-
-    if (!day || !month || !year) {
-      return null;
-    }
-
-    const parsed = new Date(Number(year), Number(month) - 1, Number(day));
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  if (value.includes("-")) {
-    const [year, month, day] = value.split("-");
-
-    if (!day || !month || !year) {
-      return null;
-    }
-
-    const parsed = new Date(Number(year), Number(month) - 1, Number(day));
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  return null;
-}
-
-function monthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function getLastMonths(baseDate: Date, totalMonths: number): Date[] {
-  return Array.from({ length: totalMonths }, (_, index) => {
-    const offset = totalMonths - index - 1;
-    return new Date(baseDate.getFullYear(), baseDate.getMonth() - offset, 1);
-  });
-}
+import { useMemo } from "react";
+import type { ExpenseRecord } from "../../api/sheet2ApiClient";
+import {
+  buildMonthlyExpenseSeries,
+  formatCurrencyValue,
+  type MonthlyExpense,
+} from "../../utils/expenseAnalytics";
 
 function roundAxisCeil(value: number): number {
   if (value <= 0) {
@@ -105,73 +38,19 @@ function formatAxisValue(value: number): string {
   return `R$${Math.round(value)}`;
 }
 
-export function MonthlySchedule() {
-  const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasError, setHasError] = useState(false);
+type MonthlyScheduleProps = {
+  expenses: ExpenseRecord[];
+  isLoading?: boolean;
+  hasError?: boolean;
+};
 
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const loadExpenses = async () => {
-      try {
-        setIsLoading(true);
-        setHasError(false);
-        const rows = await getExpenses({
-          limit: 400,
-          signal: controller.signal,
-        });
-        setExpenses(rows);
-      } catch (error) {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          setHasError(true);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadExpenses();
-
-    return () => controller.abort();
-  }, []);
-
+export function MonthlySchedule({
+  expenses,
+  isLoading = false,
+  hasError = false,
+}: MonthlyScheduleProps) {
   const monthlyData = useMemo<MonthlyExpense[]>(() => {
-    const now = new Date();
-    const lastMonths = getLastMonths(now, 6);
-
-    const totalsByMonth = new Map<string, number>(
-      lastMonths.map((monthDate) => [monthKey(monthDate), 0]),
-    );
-
-    for (const expense of expenses) {
-      const date = parseDate(expense.date);
-
-      if (!date) {
-        continue;
-      }
-
-      const key = monthKey(new Date(date.getFullYear(), date.getMonth(), 1));
-
-      if (!totalsByMonth.has(key)) {
-        continue;
-      }
-
-      const value = parseExpense(expense.expense);
-      const current = totalsByMonth.get(key) ?? 0;
-      totalsByMonth.set(key, current + value);
-    }
-
-    return lastMonths.map((monthDate) => {
-      const label = new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(
-        monthDate,
-      );
-
-      return {
-        monthLabel: label,
-        total: totalsByMonth.get(monthKey(monthDate)) ?? 0,
-      };
-    });
+    return buildMonthlyExpenseSeries(expenses, 6);
   }, [expenses]);
 
   const maxValue = useMemo(() => {
@@ -189,15 +68,6 @@ export function MonthlySchedule() {
       return Math.round(maxValue * ratio);
     });
   }, [maxValue]);
-
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }),
-    [],
-  );
 
   return (
     <div className="flex flex-col bg-zinc-900 rounded-lg p-4 border border-slate-700">
@@ -256,7 +126,7 @@ export function MonthlySchedule() {
                         key={item.monthLabel}
                         className="w-full rounded-t bg-blue-500/80 hover:bg-blue-400 transition-colors"
                         style={{ height: `${height}%` }}
-                        title={`${item.monthLabel} - ${currencyFormatter.format(item.total)}`}
+                        title={`${item.monthLabel} - ${formatCurrencyValue(item.total)}`}
                       />
                     );
                   })}
