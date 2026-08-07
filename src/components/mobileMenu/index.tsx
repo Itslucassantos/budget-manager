@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { IoMenu } from "react-icons/io5";
 import { FaWallet } from "react-icons/fa6";
@@ -50,62 +50,50 @@ export function MobileMenu() {
                   </div>
 
                   <div className="flex flex-col gap-2 mt-4 px-4">
-                    <div
+                    <NavLink
+                      to="/dashboard"
+                      onClick={() => setOpen(false)}
                       className={`${pathname === "/dashboard" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
                     >
                       <div className="flex gap-2 items-center">
                         <MdOutlineDashboardCustomize width={13} height={13} />
-                        <Link
-                          to="/dashboard"
-                          className="font-medium text-sm"
-                          onClick={() => setOpen(false)}
-                        >
-                          Dashboard
-                        </Link>
+                        <span className="font-medium text-sm">Dashboard</span>
                       </div>
 
                       <div
                         className={`${pathname === "/dashboard" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
                       ></div>
-                    </div>
+                    </NavLink>
 
-                    <div
+                    <NavLink
+                      to="/expenses"
+                      onClick={() => setOpen(false)}
                       className={`${pathname === "/expenses" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
                     >
                       <div className="flex gap-2 items-center">
                         <IoWalletOutline width={13} height={13} />
-                        <Link
-                          to="/expenses"
-                          className="font-medium text-sm"
-                          onClick={() => setOpen(false)}
-                        >
-                          Expenses
-                        </Link>
+                        <span className="font-medium text-sm">Expenses</span>
                       </div>
 
                       <div
                         className={`${pathname === "/expenses" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
                       ></div>
-                    </div>
+                    </NavLink>
 
-                    <div
+                    <NavLink
+                      to="/settings"
+                      onClick={() => setOpen(false)}
                       className={`${pathname === "/settings" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
                     >
                       <div className="flex gap-2 items-center">
                         <IoSettingsOutline width={13} height={13} />
-                        <Link
-                          to="/settings"
-                          className="font-medium text-sm"
-                          onClick={() => setOpen(false)}
-                        >
-                          Settings
-                        </Link>
+                        <span className="font-medium text-sm">Settings</span>
                       </div>
 
                       <div
                         className={`${pathname === "/settings" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
                       ></div>
-                    </div>
+                    </NavLink>
                   </div>
                 </div>
               </DialogPanel>

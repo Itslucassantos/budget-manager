@@ -1,20 +1,75 @@
+import { useState } from "react";
 import { MobileMenu } from "../../components/mobileMenu";
 import { SidebarDesktop } from "../../components/sidebarDesktop";
 
 export function Settings() {
+  const [budget, setBudget] = useState<number | null>(null);
+
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
       <MobileMenu />
       <SidebarDesktop />
 
       <div className="flex-1 min-w-0 p-4">
-        <div className="flex">
+        <div className="flex flex-col gap-4">
           <div>
             <h1 className="text-lg md:text-2xl text-slate-100 font-medium">
               Settings
             </h1>
             <p className="text-sm md:text-base text-slate-400">
               Manage your account and integrations
+            </p>
+          </div>
+
+          <div className="bg-zinc-900 border border-slate-700 flex flex-col rounded-lg p-4 w-full md:max-w-[70%]">
+            <h2 className="text-lg md:text-xl text-slate-100 font-medium">
+              Profile
+            </h2>
+
+            <div className="flex gap-4 mt-3 items-center">
+              <div className="h-12 w-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-white text-lg font-medium">
+                <span className="text-2xl font-medium text-blue-400">AS</span>
+              </div>
+
+              <div>
+                <p className="text-base font-medium text-slate-100">
+                  Ana Silva
+                </p>
+                <p className="text-sm text-slate-400">ana.silva@example.com</p>
+              </div>
+            </div>
+
+            <div>
+              <form className="flex flex-col gap-2 mt-4">
+                <label htmlFor="budget" className="text-sm text-slate-100">
+                  Monthly budget (R$)
+                </label>
+                <input
+                  type="number"
+                  placeholder="5000"
+                  name="budget"
+                  className="w-full min-w-0 bg-zinc-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-100 hover:bg-zinc-700 duration-200 *:focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={budget ?? ""}
+                  onChange={(e) =>
+                    setBudget(e.target.value ? Number(e.target.value) : null)
+                  }
+                />
+                <button
+                  type="submit"
+                  className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 duration-200"
+                >
+                  Save changes
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div className="bg-zinc-900 border border-slate-700 flex flex-col rounded-lg p-4 w-full md:max-w-[70%]">
+            <h3 className="text-base md:text-base text-slate-100 font-medium">
+              Google Sheets Integration
+            </h3>
+            <p className="text-sm md:text-base text-slate-400">
+              Connect your "Budget" spreadsheet via Sheets2API.
             </p>
           </div>
         </div>

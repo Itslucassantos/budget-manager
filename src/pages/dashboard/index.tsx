@@ -125,13 +125,13 @@ export function Dashboard() {
                 onChange={(event) =>
                   setSelectedFilter(event.target.value as ExpenseFilter)
                 }
-                className="w-full appearance-none bg-zinc-900 pr-8 text-slate-100 border-none focus:outline-none focus:ring-0 focus:border-blue-500"
+                className="w-full appearance-none bg-zinc-900 pr-8 text-slate-100 border-none outline-none focus:outline-none focus:ring-0 focus:border-blue-500"
               >
                 {filterOptions.map((option) => (
                   <option
                     key={option.value}
                     value={option.value}
-                    className="mt-1 text-slate-100 bg-zinc-900"
+                    className="text-slate-100 bg-zinc-900"
                   >
                     {option.label}
                   </option>
@@ -142,8 +142,8 @@ export function Dashboard() {
             </div>
 
             {selectedFilter === "custom" ? (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <label className="flex flex-col gap-1 text-sm text-slate-300">
+              <div className="flex gap-4 mt-2">
+                <label className="flex flex-col gap-1 text-sm text-slate-100 font-medium">
                   Start date
                   <input
                     type="date"
@@ -154,11 +154,11 @@ export function Dashboard() {
                         startDate: event.target.value,
                       }))
                     }
-                    className="rounded-lg border border-slate-700 bg-zinc-800 px-3 py-2 text-slate-100 outline-none focus:border-blue-500"
+                    className="rounded-lg border border-slate-700 bg-zinc-900 px-3 py-2 text-slate-100 outline-none focus:border-blue-500"
                   />
                 </label>
 
-                <label className="flex flex-col gap-1 text-sm text-slate-300">
+                <label className="flex flex-col gap-1 text-sm text-slate-100 font-medium">
                   End date
                   <input
                     type="date"
@@ -169,7 +169,7 @@ export function Dashboard() {
                         endDate: event.target.value,
                       }))
                     }
-                    className="rounded-lg border border-slate-700 bg-zinc-800 px-3 py-2 text-slate-100 outline-none focus:border-blue-500"
+                    className="rounded-lg border border-slate-700 bg-zinc-900 px-3 py-2 text-slate-100 outline-none focus:border-blue-500"
                   />
                 </label>
               </div>

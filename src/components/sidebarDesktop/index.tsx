@@ -7,7 +7,7 @@ export function SidebarDesktop() {
   const { pathname } = useLocation();
 
   return (
-    <div className="hidden md:flex flex-col w-64 h-screen bg-zinc-900 border-r border-slate-700">
+    <div className="hidden md:flex flex-col w-64 self-stretch bg-zinc-900 border-r border-slate-700">
       <div className="flex border-b border-slate-700 p-4">
         <div className="flex items-center justify-center w-9 h-9 bg-blue-400 rounded-md mr-4">
           <FaWallet width={13} height={13} color="white" />
@@ -22,50 +22,47 @@ export function SidebarDesktop() {
       </div>
 
       <div className="flex flex-col gap-2 mt-4 px-4">
-        <div
+        <NavLink
+          to="/dashboard"
           className={`${pathname === "/dashboard" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
         >
           <div className="flex gap-2 items-center">
             <MdOutlineDashboardCustomize width={13} height={13} />
-            <NavLink to="/dashboard" className="font-medium text-sm">
-              Dashboard
-            </NavLink>
+            <span className="font-medium text-sm">Dashboard</span>
           </div>
 
           <div
             className={`${pathname === "/dashboard" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
           ></div>
-        </div>
+        </NavLink>
 
-        <div
+        <NavLink
+          to="/expenses"
           className={`${pathname === "/expenses" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
         >
           <div className="flex gap-2 items-center">
             <IoWalletOutline width={13} height={13} />
-            <NavLink to="/expenses" className="font-medium text-sm">
-              Expenses
-            </NavLink>
+            <span className="font-medium text-sm">Expenses</span>
           </div>
 
           <div
             className={`${pathname === "/expenses" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
           ></div>
-        </div>
+        </NavLink>
 
-        <div
+        <NavLink
+          to="/settings"
           className={`${pathname === "/settings" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
         >
           <div className="flex gap-2 items-center">
             <IoSettingsOutline width={13} height={13} />
-            <NavLink to="/settings" className="font-medium text-sm">
-              Settings
-            </NavLink>
+            <span className="font-medium text-sm">Settings</span>
           </div>
 
           <div
             className={`${pathname === "/settings" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
           ></div>
-        </div>
+        </NavLink>
       </div>
     </div>
   );
