@@ -1,9 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MobileMenu } from "../../components/mobileMenu";
 import { SidebarDesktop } from "../../components/sidebarDesktop";
+import toast from "react-hot-toast";
 
 export function Settings() {
   const [budget, setBudget] = useState<number | null>(null);
+
+  useEffect(() => {
+    const storedBudget = localStorage.getItem("budget");
+    if (storedBudget) {
+      const parsedBudget = parseFloat(storedBudget);
+      if (!isNaN(parsedBudget)) {
+        setBudget(parsedBudget);
+      }
+    }
+  }, []);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (budget === null || budget < 0) {
+      toast.error("Please enter a valid budget amount.");
+      return;
+    }
+
+    localStorage.setItem("budget", budget.toString());
+    toast.success("Budget updated successfully.");
+  }
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
@@ -40,7 +63,10 @@ export function Settings() {
             </div>
 
             <div>
-              <form className="flex flex-col gap-2 mt-4">
+              <form
+                className="flex flex-col gap-2 mt-4"
+                onSubmit={handleSubmit}
+              >
                 <label htmlFor="budget" className="text-sm text-slate-100">
                   Monthly budget (R$)
                 </label>
@@ -51,7 +77,9 @@ export function Settings() {
                   className="w-full min-w-0 bg-zinc-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-100 hover:bg-zinc-700 duration-200 *:focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={budget ?? ""}
                   onChange={(e) =>
-                    setBudget(e.target.value ? Number(e.target.value) : null)
+                    setBudget(
+                      e.target.value ? parseFloat(e.target.value) : null,
+                    )
                   }
                 />
                 <button

@@ -21,7 +21,7 @@ import {
 } from "../../utils/expenseAnalytics";
 
 export function Dashboard() {
-  const budgetValue = 5000;
+  const [budgetValue, setBudgetValue] = useState(0);
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -30,6 +30,16 @@ export function Dashboard() {
     startDate: "",
     endDate: "",
   });
+
+  useEffect(() => {
+    const storedBudget = localStorage.getItem("budget");
+    if (storedBudget) {
+      const parsedBudget = parseFloat(storedBudget);
+      if (!isNaN(parsedBudget)) {
+        setBudgetValue(parsedBudget);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -69,7 +79,7 @@ export function Dashboard() {
 
   const summary = useMemo(
     () => summarizeExpensesWithBudget(filteredExpenses, budgetValue),
-    [filteredExpenses],
+    [filteredExpenses, budgetValue],
   );
 
   const budget = formatCurrencyValue(budgetValue);
