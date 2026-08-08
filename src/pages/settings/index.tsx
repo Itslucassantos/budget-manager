@@ -2,9 +2,17 @@ import { useEffect, useState } from "react";
 import { MobileMenu } from "../../components/mobileMenu";
 import { SidebarDesktop } from "../../components/sidebarDesktop";
 import toast from "react-hot-toast";
+import { defaultSheet2BaseUrl } from "../../api/api";
 
 export function Settings() {
   const [budget, setBudget] = useState<number | null>(null);
+  const [sheetsUrl, setSheetsUrl] = useState<string>(() => {
+    if (typeof window === "undefined") {
+      return defaultSheet2BaseUrl;
+    }
+
+    return window.localStorage.getItem("sheetsUrl") || defaultSheet2BaseUrl;
+  });
 
   useEffect(() => {
     const storedBudget = localStorage.getItem("budget");
@@ -26,6 +34,20 @@ export function Settings() {
 
     localStorage.setItem("budget", budget.toString());
     toast.success("Budget updated successfully.");
+  }
+
+  function handleConnectSheets(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (!sheetsUrl) {
+      toast.error("Please enter a valid Sheets2API URL.");
+      return;
+    }
+
+    const trimmedUrl = sheetsUrl.trim();
+
+    localStorage.setItem("sheetsUrl", trimmedUrl);
+    toast.success("Sheets2API URL saved successfully.");
   }
 
   return (
@@ -99,6 +121,29 @@ export function Settings() {
             <p className="text-sm md:text-base text-slate-400">
               Connect your "Budget" spreadsheet via Sheets2API.
             </p>
+
+            <form
+              className="flex flex-col gap-2 mt-4"
+              onSubmit={handleConnectSheets}
+            >
+              <label htmlFor="sheets" className="text-sm text-slate-100">
+                Sheets2API URL
+              </label>
+              <input
+                type="text"
+                placeholder="https://sheets2api.com/your-api-endpoint"
+                name="sheets"
+                className="w-full min-w-0 bg-zinc-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-100 hover:bg-zinc-700 duration-200 *:focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={sheetsUrl}
+                onChange={(e) => setSheetsUrl(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 duration-200"
+              >
+                Connect spreadsheet
+              </button>
+            </form>
           </div>
         </div>
       </div>

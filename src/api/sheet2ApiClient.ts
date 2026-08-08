@@ -1,4 +1,4 @@
-import { sheet2BaseUrl } from "./api";
+import { getSheet2BaseUrl } from "./api";
 
 export type ExpenseRecord = {
   buy: string;
@@ -113,7 +113,9 @@ export async function getExpenses(
     params.set("expense", normalizedSearch);
   }
 
-  const response = await fetch(`${sheet2BaseUrl}?${params.toString()}`, {
+  const baseUrl = getSheet2BaseUrl();
+
+  const response = await fetch(`${baseUrl}?${params.toString()}`, {
     signal,
   });
   const rows =
@@ -125,7 +127,9 @@ export async function getExpenses(
 export async function createExpense(
   payload: ExpensePayload,
 ): Promise<ExpenseRecord> {
-  const response = await fetch(sheet2BaseUrl, {
+  const baseUrl = getSheet2BaseUrl();
+
+  const response = await fetch(baseUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -148,7 +152,9 @@ export async function updateExpense(
 ): Promise<void> {
   const params = buildIdentityParams(original);
 
-  const response = await fetch(`${sheet2BaseUrl}?${params.toString()}`, {
+  const baseUrl = getSheet2BaseUrl();
+
+  const response = await fetch(`${baseUrl}?${params.toString()}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -172,7 +178,9 @@ export async function updateExpense(
 export async function deleteExpense(expense: ExpenseRecord): Promise<void> {
   const params = buildIdentityParams(expense);
 
-  const response = await fetch(`${sheet2BaseUrl}?${params.toString()}`, {
+  const baseUrl = getSheet2BaseUrl();
+
+  const response = await fetch(`${baseUrl}?${params.toString()}`, {
     method: "DELETE",
   });
 
