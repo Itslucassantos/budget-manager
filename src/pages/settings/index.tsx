@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { MobileMenu } from "../../components/mobileMenu";
 import { SidebarDesktop } from "../../components/sidebarDesktop";
 import toast from "react-hot-toast";
 import { defaultSheet2BaseUrl } from "../../api/api";
+import { AuthContext } from "../../contexts/AuthContext";
 
 export function Settings() {
+  const { user } = useContext(AuthContext);
   const [budget, setBudget] = useState<number | null>(null);
   const [sheetsUrl, setSheetsUrl] = useState<string>(() => {
     if (typeof window === "undefined") {
@@ -73,14 +75,19 @@ export function Settings() {
 
             <div className="flex gap-4 mt-3 items-center">
               <div className="h-12 w-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-white text-lg font-medium">
-                <span className="text-2xl font-medium text-blue-400">AS</span>
+                <span className="text-2xl font-medium text-blue-400">
+                  {user?.name
+                    ? user.name.charAt(0) +
+                      user.name.charAt(user.name.lastIndexOf(" ") + 1)
+                    : "AN"}
+                </span>
               </div>
 
               <div>
                 <p className="text-base font-medium text-slate-100">
-                  Ana Silva
+                  {user?.name}
                 </p>
-                <p className="text-sm text-slate-400">ana.silva@example.com</p>
+                <p className="text-sm text-slate-400">{user?.email}</p>
               </div>
             </div>
 

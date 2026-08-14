@@ -2,8 +2,12 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "../../components/input";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { FaGoogle, FaWallet } from "react-icons/fa6";
+import { useContext, useState } from "react";
+import { AuthContext } from "../../contexts/AuthContext";
+import toast from "react-hot-toast";
+import bcrypt from "bcryptjs";
 
 const schema = z.object({
   email: z
@@ -16,6 +20,9 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function Login() {
+  const navigate = useNavigate();
+  const { setUser } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
@@ -29,8 +36,47 @@ export function Login() {
     },
   });
 
-  function onSubmit(data: FormData) {
-    console.log(data);
+  async function onSubmit(data: FormData) {
+    if (!data.email || !data.password) return;
+
+    setLoading(true);
+    try {
+      const storedUserRaw = localStorage.getItem("user");
+      if (!storedUserRaw) {
+        toast.error("User not found");
+        return;
+      }
+
+      const storedUser = JSON.parse(storedUserRaw);
+
+      if (storedUser.email !== data.email) {
+        toast.error("Invalid email or password");
+        return;
+      }
+
+      const isPasswordValid = await bcrypt.compare(
+        data.password,
+        storedUser.password,
+      );
+
+      if (!isPasswordValid) {
+        toast.error("Invalid email or password");
+        return;
+      }
+
+      setUser({
+        uid: storedUser.uid,
+        name: storedUser.name,
+        email: storedUser.email,
+      });
+
+      reset();
+      navigate("/dashboard");
+    } catch {
+      toast.error("Error during login");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -96,9 +142,10 @@ export function Login() {
 
           <button
             type="submit"
-            className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 duration-200"
+            className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 duration-200 disabled:opacity-50"
+            disabled={loading}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
 
           <p className="text-sm text-slate-400">

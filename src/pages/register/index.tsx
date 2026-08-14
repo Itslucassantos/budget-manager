@@ -4,6 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "../../components/input";
 import { NavLink } from "react-router-dom";
 import { FaWallet } from "react-icons/fa6";
+import { useContext, useState } from "react";
+import { AuthContext } from "../../contexts/AuthContext";
+import toast from "react-hot-toast";
+import { v4 as uuidv4 } from "uuid";
+import bcrypt from "bcryptjs";
 
 const schema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -17,6 +22,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function Register() {
+  const [loading, setLoading] = useState(false);
+  const { setUser } = useContext(AuthContext);
   const {
     register,
     handleSubmit,
@@ -31,8 +38,42 @@ export function Register() {
     },
   });
 
-  function onSubmit(data: FormData) {
-    console.log(data);
+  async function onSubmit(data: FormData) {
+    if (!data.name || !data.email || !data.password) {
+      return;
+    }
+
+    try {
+      const uid = uuidv4();
+
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+
+      setUser({
+        uid: uid,
+        name: data.name,
+        email: data.email,
+      });
+      setLoading(true);
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          uid: uid,
+          name: data.name,
+          email: data.email,
+          password: hashedPassword,
+        }),
+      );
+
+      reset();
+      toast.success("User registered successfully");
+    } catch (error) {
+      console.log(error);
+
+      toast.error("Error registering user");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -109,9 +150,10 @@ export function Register() {
 
           <button
             type="submit"
-            className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 duration-200"
+            className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 duration-200 disabled:opacity-50"
+            disabled={loading}
           >
-            Register
+            {loading ? "Registering..." : "Register"}
           </button>
 
           <p className="text-sm text-slate-400">
