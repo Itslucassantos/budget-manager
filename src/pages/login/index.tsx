@@ -5,7 +5,7 @@ import { Input } from "../../components/input";
 import { NavLink, useNavigate } from "react-router-dom";
 import { FaWallet } from "react-icons/fa6";
 import { useContext, useState } from "react";
-import { AuthContext } from "../../contexts/AuthContext";
+import { AuthContext } from "../../contexts/authContext";
 import toast from "react-hot-toast";
 import bcrypt from "bcryptjs";
 import { GoogleLogin } from "@react-oauth/google";
@@ -108,7 +108,7 @@ export function Login() {
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
       navigate("/dashboard");
-    } catch (error) {
+    } catch {
       toast.error("Error during Google login");
     }
   }

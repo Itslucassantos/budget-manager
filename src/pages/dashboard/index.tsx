@@ -8,8 +8,7 @@ import { FiCalendar, FiChevronDown } from "react-icons/fi";
 import { RiBarChartFill, RiShoppingCartFill } from "react-icons/ri";
 import { Card } from "../../components/card";
 import { MonthlySchedule } from "../../components/monthlySchedule";
-import { MobileMenu } from "../../components/mobileMenu";
-import { SidebarDesktop } from "../../components/sidebarDesktop";
+import { AppShell } from "../../components/appShell";
 import toast from "react-hot-toast";
 import {
   filterExpenseByDate,
@@ -21,7 +20,16 @@ import {
 import { useExpensesQuery } from "../../hooks/useExpensesQuery";
 
 export function Dashboard() {
-  const [budgetValue, setBudgetValue] = useState(0);
+  const [budgetValue] = useState(() => {
+    const storedBudget = localStorage.getItem("budget");
+
+    if (!storedBudget) {
+      return 0;
+    }
+
+    const parsedBudget = parseFloat(storedBudget);
+    return Number.isNaN(parsedBudget) ? 0 : parsedBudget;
+  });
   const [selectedFilter, setSelectedFilter] = useState<ExpenseFilter>("all");
   const [customRange, setCustomRange] = useState<ExpenseDateRange>({
     startDate: "",
@@ -33,16 +41,6 @@ export function Dashboard() {
     isLoading,
     isError: hasError,
   } = useExpensesQuery(400);
-
-  useEffect(() => {
-    const storedBudget = localStorage.getItem("budget");
-    if (storedBudget) {
-      const parsedBudget = parseFloat(storedBudget);
-      if (!isNaN(parsedBudget)) {
-        setBudgetValue(parsedBudget);
-      }
-    }
-  }, []);
 
   const filteredExpenses = useMemo(
     () =>
@@ -62,8 +60,11 @@ export function Dashboard() {
   const averageTicketValue = formatCurrencyValue(summary.averageTicketValue);
   const totalSpent = formatCurrencyValue(summary.totalSpent);
   const percentageSpent = `${summary.percentageSpent.toFixed(2)}%`;
+  const clampedPercentageSpent = `${Math.min(summary.percentageSpent, 100).toFixed(2)}%`;
   const shoppingNumber = summary.shoppingNumber;
   const topCategory = summary.topCategory;
+  const overspentAmount = Math.max(summary.totalSpent - budgetValue, 0);
+  const overspentFormatted = formatCurrencyValue(overspentAmount);
   const hasNoFilteredExpenses =
     !isLoading && expenses.length > 0 && filteredExpenses.length === 0;
 
@@ -86,192 +87,189 @@ export function Dashboard() {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      <MobileMenu />
-      <SidebarDesktop />
-
-      <div className="flex-1 min-w-0 p-4">
-        <div className="flex justify-between items-center gap-4 flex-wrap">
-          <div>
-            <h1 className="text-lg md:text-2xl text-slate-100 font-medium">
-              Dashboard
-            </h1>
-            <p className="text-sm md:text-base text-slate-400">
-              Overview of your finances
-            </p>
-          </div>
-
-          <div>
-            <div className="relative inline-flex min-w-56 items-center rounded-2xl border border-slate-700 bg-zinc-900 px-4 py-2 shadow-sm transition hover:border-slate-700 hover:bg-zinc-900 focus-within:border-blue-500">
-              <FiCalendar className="mr-2 shrink-0 text-slate-400" />
-
-              <select
-                value={selectedFilter}
-                onChange={(event) =>
-                  setSelectedFilter(event.target.value as ExpenseFilter)
-                }
-                className="w-full appearance-none bg-zinc-900 pr-8 text-slate-100 border-none outline-none focus:outline-none focus:ring-0 focus:border-blue-500"
-              >
-                {filterOptions.map((option) => (
-                  <option
-                    key={option.value}
-                    value={option.value}
-                    className="text-slate-100 bg-zinc-900"
-                  >
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              <FiChevronDown className="pointer-events-none absolute right-4 text-slate-400" />
-            </div>
-
-            {selectedFilter === "custom" ? (
-              <div className="flex gap-4 mt-2">
-                <label className="flex flex-col gap-1 text-sm text-slate-100 font-medium">
-                  Start date
-                  <input
-                    type="date"
-                    value={customRange.startDate}
-                    onChange={(event) =>
-                      setCustomRange((current) => ({
-                        ...current,
-                        startDate: event.target.value,
-                      }))
-                    }
-                    className="rounded-lg border border-slate-700 bg-zinc-900 px-3 py-2 text-slate-100 outline-none focus:border-blue-500"
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1 text-sm text-slate-100 font-medium">
-                  End date
-                  <input
-                    type="date"
-                    value={customRange.endDate}
-                    onChange={(event) =>
-                      setCustomRange((current) => ({
-                        ...current,
-                        endDate: event.target.value,
-                      }))
-                    }
-                    className="rounded-lg border border-slate-700 bg-zinc-900 px-3 py-2 text-slate-100 outline-none focus:border-blue-500"
-                  />
-                </label>
-              </div>
-            ) : null}
-          </div>
+    <AppShell>
+      <div className="flex justify-between items-center gap-4 flex-wrap">
+        <div>
+          <h1 className="text-lg md:text-2xl text-slate-100 font-medium">
+            Dashboard
+          </h1>
+          <p className="text-sm md:text-base text-slate-400">
+            Overview of your finances
+          </p>
         </div>
 
-        {hasError && (
-          <div className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-sm text-red-200">
-            Error loading spreadsheet data.
+        <div>
+          <div className="relative inline-flex min-w-56 items-center rounded-2xl border border-slate-700 bg-zinc-900 px-4 py-2 shadow-sm transition hover:border-slate-700 hover:bg-zinc-900 focus-within:border-blue-500">
+            <FiCalendar className="mr-2 shrink-0 text-slate-400" />
+
+            <select
+              value={selectedFilter}
+              onChange={(event) =>
+                setSelectedFilter(event.target.value as ExpenseFilter)
+              }
+              className="w-full appearance-none bg-zinc-900 pr-8 text-slate-100 border-none outline-none focus:outline-none focus:ring-0 focus:border-blue-500"
+            >
+              {filterOptions.map((option) => (
+                <option
+                  key={option.value}
+                  value={option.value}
+                  className="text-slate-100 bg-zinc-900"
+                >
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <FiChevronDown className="pointer-events-none absolute right-4 text-slate-400" />
           </div>
-        )}
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card
-            title="BUDGET"
-            price={budget}
-            description="Monthly limit"
-            icon={<FaWallet height={13} width={13} className="text-blue-500" />}
-          />
+          {selectedFilter === "custom" ? (
+            <div className="flex gap-4 mt-2">
+              <label className="flex flex-col gap-1 text-sm text-slate-100 font-medium">
+                Start date
+                <input
+                  type="date"
+                  value={customRange.startDate}
+                  onChange={(event) =>
+                    setCustomRange((current) => ({
+                      ...current,
+                      startDate: event.target.value,
+                    }))
+                  }
+                  className="rounded-lg border border-slate-700 bg-zinc-900 px-3 py-2 text-slate-100 outline-none focus:border-blue-500"
+                />
+              </label>
 
-          <Card
-            title="REMAINING BALANCE"
-            price={remainingBalance}
-            description="Available"
-            icon={
-              <HiMiniArrowTrendingDown
-                height={13}
-                width={13}
-                className="text-green-500"
-              />
-            }
-          />
-
-          <Card
-            title="AVERAGE TICKET VALUE"
-            price={averageTicketValue}
-            description="Average per purchase"
-            icon={
-              <RiBarChartFill
-                height={13}
-                width={13}
-                className="text-yellow-500"
-              />
-            }
-          />
-
-          <Card
-            title="TOTAL SPENT"
-            price={totalSpent}
-            description={`${percentageSpent} of the budget`}
-            icon={
-              <HiMiniArrowTrendingUp
-                height={13}
-                width={13}
-                className="text-red-500"
-              />
-            }
-          />
-
-          <Card
-            title="SHOPPING"
-            shoppingNumber={shoppingNumber}
-            description="Transactions during the period"
-            icon={
-              <RiShoppingCartFill
-                height={13}
-                width={13}
-                className="text-purple-500"
-              />
-            }
-          />
-
-          <Card
-            title="TOP CATEGORY"
-            price={topCategory}
-            description="Most purchased category"
-            icon={<FaTag height={13} width={13} className="text-green-300" />}
-          />
-        </div>
-
-        <div className="bg-zinc-900 rounded-lg p-4 border border-slate-700 mt-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-base text-slate-100 font-medium">
-              Use of the budget
-            </p>
-            <div className="text-base text-slate-400">
-              {totalSpent} of {budget}
+              <label className="flex flex-col gap-1 text-sm text-slate-100 font-medium">
+                End date
+                <input
+                  type="date"
+                  value={customRange.endDate}
+                  onChange={(event) =>
+                    setCustomRange((current) => ({
+                      ...current,
+                      endDate: event.target.value,
+                    }))
+                  }
+                  className="rounded-lg border border-slate-700 bg-zinc-900 px-3 py-2 text-slate-100 outline-none focus:border-blue-500"
+                />
+              </label>
             </div>
-          </div>
-
-          <div className="mb-2">
-            <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-              <div
-                className="bg-blue-600 h-2.5 rounded-full"
-                style={{ width: percentageSpent }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">{percentageSpent} used</p>
-
-            <div className="text-sm text-slate-400">
-              {remainingBalance} remaining
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <MonthlySchedule
-            expenses={filteredExpenses}
-            isLoading={isLoading}
-            hasError={hasError}
-          />
+          ) : null}
         </div>
       </div>
-    </div>
+
+      {hasError && (
+        <div className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-sm text-red-200">
+          Error loading spreadsheet data.
+        </div>
+      )}
+
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card
+          title="BUDGET"
+          price={budget}
+          description="Monthly limit"
+          icon={<FaWallet height={13} width={13} className="text-blue-500" />}
+        />
+
+        <Card
+          title="REMAINING BALANCE"
+          price={remainingBalance}
+          description="Available"
+          icon={
+            <HiMiniArrowTrendingDown
+              height={13}
+              width={13}
+              className="text-green-500"
+            />
+          }
+        />
+
+        <Card
+          title="AVERAGE TICKET VALUE"
+          price={averageTicketValue}
+          description="Average per purchase"
+          icon={
+            <RiBarChartFill
+              height={13}
+              width={13}
+              className="text-yellow-500"
+            />
+          }
+        />
+
+        <Card
+          title="TOTAL SPENT"
+          price={totalSpent}
+          description={`${percentageSpent} of the budget`}
+          icon={
+            <HiMiniArrowTrendingUp
+              height={13}
+              width={13}
+              className="text-red-500"
+            />
+          }
+        />
+
+        <Card
+          title="SHOPPING"
+          shoppingNumber={shoppingNumber}
+          description="Transactions during the period"
+          icon={
+            <RiShoppingCartFill
+              height={13}
+              width={13}
+              className="text-purple-500"
+            />
+          }
+        />
+
+        <Card
+          title="TOP CATEGORY"
+          price={topCategory}
+          description="Most purchased category"
+          icon={<FaTag height={13} width={13} className="text-green-300" />}
+        />
+      </div>
+
+      <div className="bg-zinc-900 rounded-lg p-4 border border-slate-700 mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-base text-slate-100 font-medium">
+            Use of the budget
+          </p>
+          <div className="text-base text-slate-400">
+            {totalSpent} of {budget}
+          </div>
+        </div>
+
+        <div className="mb-2">
+          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full"
+              style={{ width: clampedPercentageSpent }}
+            ></div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-400">{percentageSpent} used</p>
+
+          <div className="text-sm text-slate-400">
+            {summary.totalSpent > budgetValue && budgetValue > 0
+              ? `${overspentFormatted} over budget`
+              : `${remainingBalance} remaining`}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <MonthlySchedule
+          expenses={filteredExpenses}
+          isLoading={isLoading}
+          hasError={hasError}
+        />
+      </div>
+    </AppShell>
   );
 }

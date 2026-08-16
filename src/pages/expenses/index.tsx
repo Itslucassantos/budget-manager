@@ -1,27 +1,21 @@
 import { BudgetTable } from "../../components/budgetTable";
-import { MobileMenu } from "../../components/mobileMenu";
-import { SidebarDesktop } from "../../components/sidebarDesktop";
+import { AppShell } from "../../components/appShell";
 
 export function Expenses() {
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      <MobileMenu />
-      <SidebarDesktop />
-
-      <div className="flex-1 min-w-0 p-4">
-        <div>
-          <h1 className="text-lg md:text-2xl text-slate-100 font-medium">
-            Expenses
-          </h1>
-          <p className="text-sm md:text-base text-slate-400">
-            Manage all your transactions
-          </p>
-        </div>
-
-        <div className="mt-4">
-          <BudgetTable />
-        </div>
+    <AppShell>
+      <div>
+        <h1 className="text-lg md:text-2xl text-slate-100 font-medium">
+          Expenses
+        </h1>
+        <p className="text-sm md:text-base text-slate-400">
+          Manage all your transactions
+        </p>
       </div>
-    </div>
+
+      <div className="mt-4">
+        <BudgetTable />
+      </div>
+    </AppShell>
   );
 }

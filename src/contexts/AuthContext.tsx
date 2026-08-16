@@ -1,43 +1,25 @@
-import { createContext, useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { AuthContext, type UserProps } from "./authContext";
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-type AuthContextData = {
-  signed: boolean;
-  user: UserProps | null;
-  loadingAuth: boolean;
-  handleInfoUser: ({ name, email, uid }: UserProps) => void;
-  setUser: React.Dispatch<React.SetStateAction<UserProps | null>>;
-  handleLogout: () => void;
-};
-
-interface UserProps {
-  uid: string;
-  name: string;
-  email: string;
-}
-
-export const AuthContext = createContext({} as AuthContextData);
-
 function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<UserProps | null>(null);
-  const [loadingAuth, setLoadingAuth] = useState(true);
-
-  useEffect(() => {
+  const [user, setUser] = useState<UserProps | null>(() => {
     const storedUser = localStorage.getItem("user");
 
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser) as UserProps);
-      } catch {
-        localStorage.removeItem("user");
-      }
+    if (!storedUser) {
+      return null;
     }
 
-    setLoadingAuth(false);
-  }, []);
+    try {
+      return JSON.parse(storedUser) as UserProps;
+    } catch {
+      localStorage.removeItem("user");
+      return null;
+    }
+  });
 
   function handleInfoUser({ name, email, uid }: UserProps) {
     setUser({
@@ -57,7 +39,7 @@ function AuthProvider({ children }: AuthProviderProps) {
       value={{
         signed: !!user,
         user,
-        loadingAuth,
+        loadingAuth: false,
         handleInfoUser,
         setUser,
         handleLogout,

@@ -12,6 +12,10 @@ import DeleteModal from "./deleteModal";
 import { useExpensesQuery } from "../../hooks/useExpensesQuery";
 import { expensesQueryKey } from "../../hooks/useExpensesQuery";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  ALL_CATEGORIES_LABEL,
+  EXPENSE_FILTER_CATEGORIES,
+} from "../../constants/expense";
 
 export type BudgetTableProps = ExpenseRecord;
 
@@ -26,7 +30,7 @@ export function BudgetTable() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [selectedCategory, setSelectedCategory] =
-    useState<string>("Categories");
+    useState<string>(ALL_CATEGORIES_LABEL);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const deferredSearchTerm = useDeferredValue(debouncedSearchTerm);
@@ -53,7 +57,8 @@ export function BudgetTable() {
 
     return data.filter((item) => {
       const matchesCategory =
-        selectedCategory === "Categories" || item.category === selectedCategory;
+        selectedCategory === ALL_CATEGORIES_LABEL ||
+        item.category === selectedCategory;
 
       const matchesSearch =
         !normalizedSearch ||
@@ -95,21 +100,9 @@ export function BudgetTable() {
     { key: "actions", label: "ACTIONS" },
   ];
 
-  const categories = [
-    "Categories",
-    "Food",
-    "Transport",
-    "Entertainment",
-    "Health",
-    "Education",
-    "Shopping",
-    "Bills",
-    "Other",
-  ];
-
   useEffect(() => {
     if (hasLoadError) {
-      setErrorMessage("Error loading expenses");
+      toast.error("Error loading expenses");
     }
   }, [hasLoadError]);
 
@@ -165,7 +158,9 @@ export function BudgetTable() {
   }
 
   async function handleExpenseSaved() {
-    await queryClient.invalidateQueries({ queryKey: expensesQueryKey });
+    await queryClient.invalidateQueries({
+      queryKey: [...expensesQueryKey, 400],
+    });
   }
 
   return (
@@ -203,7 +198,7 @@ export function BudgetTable() {
               }}
               className="bg-zinc-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-100 hover:bg-zinc-700 duration-200"
             >
-              {categories.map((category) => (
+              {EXPENSE_FILTER_CATEGORIES.map((category) => (
                 <option key={category} value={category}>
                   {category}
                 </option>
@@ -268,9 +263,9 @@ export function BudgetTable() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedData.map((row) => (
+                {paginatedData.map((row, index) => (
                   <tr
-                    key={`${row.buy}-${row.category}-${row.date}-${row.expense}-${data.indexOf(row)}`}
+                    key={`${row.buy}-${row.category}-${row.date}-${row.expense}-${effectiveCurrentPage}-${index}`}
                     className="hover:bg-zinc-800"
                   >
                     <td className="px-5 py-3.5 text-slate-100 text-sm font-medium border-b border-slate-700">

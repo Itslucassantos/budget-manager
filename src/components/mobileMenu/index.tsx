@@ -1,20 +1,17 @@
 import { useContext, useEffect, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { IoMenu } from "react-icons/io5";
 import { FaWallet } from "react-icons/fa6";
-import { MdOutlineDashboardCustomize } from "react-icons/md";
-import { IoWalletOutline } from "react-icons/io5";
-import { IoSettingsOutline } from "react-icons/io5";
 import { IoIosLogOut } from "react-icons/io";
 import { RiDeleteBinLine } from "react-icons/ri";
-import { AuthContext } from "../../contexts/AuthContext";
+import { AuthContext } from "../../contexts/authContext";
 import ModalDeleteAccount from "../modalDeleteAccount";
+import { NavigationLinks } from "../navigationLinks";
+import toast from "react-hot-toast";
 
 export function MobileMenu() {
   const { handleLogout, user } = useContext(AuthContext);
   const [open, setOpen] = useState(false);
-  const { pathname } = useLocation();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [openModalDeleteAccount, setOpenModalDeleteAccount] = useState(false);
 
@@ -24,6 +21,7 @@ export function MobileMenu() {
 
   useEffect(() => {
     if (errorMessage) {
+      toast.error(errorMessage);
       const timer = setTimeout(() => {
         setErrorMessage(null);
       }, 3000);
@@ -48,7 +46,7 @@ export function MobileMenu() {
 
         <div className="fixed inset-0 overflow-hidden">
           <div className="absolute inset-0 overflow-hidden">
-            <div className="pointer-events-none fixed inset-y-0 left-0 flex max-w-65/100">
+            <div className="pointer-events-none fixed inset-y-0 left-0 flex max-w-[65%]">
               <DialogPanel
                 transition
                 className="pointer-events-auto relative w-screen max-w-md transform transition duration-500 ease-in-out data-closed:-translate-x-full sm:duration-700"
@@ -69,52 +67,7 @@ export function MobileMenu() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 mt-4 px-4">
-                    <NavLink
-                      to="/dashboard"
-                      onClick={() => setOpen(false)}
-                      className={`${pathname === "/dashboard" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
-                    >
-                      <div className="flex gap-2 items-center">
-                        <MdOutlineDashboardCustomize width={13} height={13} />
-                        <span className="font-medium text-sm">Dashboard</span>
-                      </div>
-
-                      <div
-                        className={`${pathname === "/dashboard" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
-                      ></div>
-                    </NavLink>
-
-                    <NavLink
-                      to="/expenses"
-                      onClick={() => setOpen(false)}
-                      className={`${pathname === "/expenses" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
-                    >
-                      <div className="flex gap-2 items-center">
-                        <IoWalletOutline width={13} height={13} />
-                        <span className="font-medium text-sm">Expenses</span>
-                      </div>
-
-                      <div
-                        className={`${pathname === "/expenses" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
-                      ></div>
-                    </NavLink>
-
-                    <NavLink
-                      to="/settings"
-                      onClick={() => setOpen(false)}
-                      className={`${pathname === "/settings" ? "bg-zinc-800 text-blue-400" : "text-slate-700 hover:bg-zinc-800 hover:text-slate-100"} p-2 rounded-md flex gap-2 items-center justify-around`}
-                    >
-                      <div className="flex gap-2 items-center">
-                        <IoSettingsOutline width={13} height={13} />
-                        <span className="font-medium text-sm">Settings</span>
-                      </div>
-
-                      <div
-                        className={`${pathname === "/settings" ? "rounded-full bg-blue-400 w-2 h-2" : ""}`}
-                      ></div>
-                    </NavLink>
-                  </div>
+                  <NavigationLinks onNavigate={() => setOpen(false)} />
 
                   <div className="flex flex-col gap-2 mt-auto px-4 border-t border-slate-700 pt-4">
                     <button

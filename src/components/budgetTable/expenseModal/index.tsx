@@ -12,6 +12,7 @@ import { Input } from "../../input";
 import { useEffect } from "react";
 import { toDateInputValue, toDisplayDate } from "../../../utils/dateFormatter";
 import { createExpense, updateExpense } from "../../../api/sheet2ApiClient";
+import { EXPENSE_CATEGORIES } from "../../../constants/expense";
 
 type ExpenseModalProps = {
   open: boolean;
@@ -23,6 +24,8 @@ type ExpenseModalProps = {
   isSaving: boolean;
   setIsSaving: React.Dispatch<React.SetStateAction<boolean>>;
 };
+
+const SELECT_CATEGORY_PLACEHOLDER = "Select a category";
 
 const schema = z.object({
   buy: z.string().min(1, { message: "Buy is required" }),
@@ -52,7 +55,7 @@ export default function ExpenseModal({
     resolver: zodResolver(schema),
     defaultValues: {
       buy: "",
-      category: "Select a category",
+      category: SELECT_CATEGORY_PLACEHOLDER,
       date: "",
       expense: "",
     },
@@ -73,26 +76,15 @@ export default function ExpenseModal({
     } else {
       reset({
         buy: "",
-        category: "Select a category",
+        category: SELECT_CATEGORY_PLACEHOLDER,
         date: "",
         expense: "",
       });
     }
   }, [editingExpense, reset, open]);
 
-  const categories = [
-    "Food",
-    "Transport",
-    "Entertainment",
-    "Health",
-    "Education",
-    "Shopping",
-    "Bills",
-    "Other",
-  ];
-
   async function onSubmit(data: FormData) {
-    if (data.category === "Select a category") {
+    if (data.category === SELECT_CATEGORY_PLACEHOLDER) {
       setErrorMessage("Please select a category");
       return;
     }
@@ -203,7 +195,7 @@ export default function ExpenseModal({
                     <option value="" disabled>
                       Select a category
                     </option>
-                    {categories.map((category) => (
+                    {EXPENSE_CATEGORIES.map((category) => (
                       <option key={category} value={category}>
                         {category}
                       </option>

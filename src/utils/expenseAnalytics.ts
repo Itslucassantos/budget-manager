@@ -1,4 +1,5 @@
 import type { ExpenseRecord } from "../api/sheet2ApiClient";
+import { parseDateInputValue, parseFlexibleDate } from "./dateFormatter";
 
 export type MonthlyExpense = {
   monthLabel: string;
@@ -61,33 +62,7 @@ export function parseExpenseValue(value: string): number {
 }
 
 export function parseExpenseDate(value: string): Date | null {
-  if (!value) {
-    return null;
-  }
-
-  if (value.includes("/")) {
-    const [day, month, year] = value.split("/");
-
-    if (!day || !month || !year) {
-      return null;
-    }
-
-    const parsed = new Date(Number(year), Number(month) - 1, Number(day));
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  if (value.includes("-")) {
-    const [year, month, day] = value.split("-");
-
-    if (!day || !month || !year) {
-      return null;
-    }
-
-    const parsed = new Date(Number(year), Number(month) - 1, Number(day));
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  return null;
+  return parseFlexibleDate(value);
 }
 
 function startOfDay(date: Date): Date {
@@ -112,22 +87,6 @@ function startOfMonth(date: Date): Date {
 
 function startOfNextMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth() + 1, 1);
-}
-
-function parseDateInput(value: string): Date | null {
-  if (!value) {
-    return null;
-  }
-
-  const [year, month, day] = value.split("-");
-
-  if (!year || !month || !day) {
-    return null;
-  }
-
-  const parsed = new Date(Number(year), Number(month) - 1, Number(day));
-
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 export function filterExpenseByDate(
@@ -181,8 +140,8 @@ export function filterExpenseByDate(
       return normalizedExpenseDate >= start && normalizedExpenseDate <= end;
     }
     case "custom": {
-      const start = parseDateInput(customRange?.startDate ?? "");
-      const end = parseDateInput(customRange?.endDate ?? "");
+      const start = parseDateInputValue(customRange?.startDate ?? "");
+      const end = parseDateInputValue(customRange?.endDate ?? "");
 
       if (!start || !end) {
         return false;
@@ -282,7 +241,7 @@ export function summarizeExpensesWithBudget(
   );
   const topCategory = sortedCategories[0]?.[0] ?? "N/A";
 
-  const remainingBalance = Math.max(budget - totalSpent, 0);
+  const remainingBalance = budget - totalSpent;
   const percentageSpent = budget > 0 ? (totalSpent / budget) * 100 : 0;
 
   return {

@@ -5,7 +5,7 @@ import { Input } from "../../components/input";
 import { NavLink } from "react-router-dom";
 import { FaWallet } from "react-icons/fa6";
 import { useContext, useState } from "react";
-import { AuthContext } from "../../contexts/AuthContext";
+import { AuthContext } from "../../contexts/authContext";
 import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import bcrypt from "bcryptjs";
