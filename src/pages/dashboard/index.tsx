@@ -6,7 +6,6 @@ import {
 } from "react-icons/hi2";
 import { FiCalendar, FiChevronDown } from "react-icons/fi";
 import { RiBarChartFill, RiShoppingCartFill } from "react-icons/ri";
-import { getExpenses, type ExpenseRecord } from "../../api/sheet2ApiClient";
 import { Card } from "../../components/card";
 import { MonthlySchedule } from "../../components/monthlySchedule";
 import { MobileMenu } from "../../components/mobileMenu";
@@ -19,17 +18,21 @@ import {
   type ExpenseFilter,
   summarizeExpensesWithBudget,
 } from "../../utils/expenseAnalytics";
+import { useExpensesQuery } from "../../hooks/useExpensesQuery";
 
 export function Dashboard() {
   const [budgetValue, setBudgetValue] = useState(0);
-  const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasError, setHasError] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<ExpenseFilter>("all");
   const [customRange, setCustomRange] = useState<ExpenseDateRange>({
     startDate: "",
     endDate: "",
   });
+
+  const {
+    data: expenses = [],
+    isLoading,
+    isError: hasError,
+  } = useExpensesQuery(400);
 
   useEffect(() => {
     const storedBudget = localStorage.getItem("budget");
@@ -39,34 +42,6 @@ export function Dashboard() {
         setBudgetValue(parsedBudget);
       }
     }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const loadExpenses = async () => {
-      try {
-        setIsLoading(true);
-        setHasError(false);
-
-        const rows = await getExpenses({
-          limit: 400,
-          signal: controller.signal,
-        });
-
-        setExpenses(rows);
-      } catch (error) {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          setHasError(true);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadExpenses();
-
-    return () => controller.abort();
   }, []);
 
   const filteredExpenses = useMemo(
@@ -94,14 +69,9 @@ export function Dashboard() {
 
   useEffect(() => {
     if (hasNoFilteredExpenses) {
-      toast.custom(
-        () => (
-          <div className="rounded-lg border border-blue-700 bg-blue-950 px-4 py-3 text-sm text-blue-100 shadow-lg">
-            No expenses match the selected filter.
-          </div>
-        ),
-        { duration: 3000 },
-      );
+      toast("No expenses match the selected filter.", {
+        duration: 3000,
+      });
     }
   }, [hasNoFilteredExpenses]);
 

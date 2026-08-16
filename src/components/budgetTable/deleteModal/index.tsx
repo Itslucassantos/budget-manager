@@ -10,10 +10,7 @@ import { deleteExpense } from "../../../api/sheet2ApiClient";
 type DeleteModalProps = {
   open: boolean;
   onClose: () => void;
-  loadExpenses: (options?: {
-    signal?: AbortSignal;
-    showListLoading?: boolean;
-  }) => Promise<void>;
+  onDeleted: () => Promise<void>;
   setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
   setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
   isDeleting: boolean;
@@ -28,7 +25,7 @@ export default function DeleteModal({
   setErrorMessage,
   isDeleting,
   setIsDeleting,
-  loadExpenses,
+  onDeleted,
   expense,
 }: DeleteModalProps) {
   async function handleDelete() {
@@ -39,7 +36,7 @@ export default function DeleteModal({
     try {
       setIsDeleting(true);
       await deleteExpense(expense);
-      await loadExpenses({ showListLoading: false });
+      await onDeleted();
       onClose();
       setSuccessMessage("Expense deleted successfully");
     } catch {

@@ -1,29 +1,24 @@
 import { ImPencil } from "react-icons/im";
 import { FaRegTrashCan } from "react-icons/fa6";
-import {
-  useCallback,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { IoSearchOutline } from "react-icons/io5";
 import ExpenseModal from "./expenseModal";
 import { LuPlus } from "react-icons/lu";
 import toast from "react-hot-toast";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import { MdKeyboardArrowRight } from "react-icons/md";
-import { getExpenses, type ExpenseRecord } from "../../api/sheet2ApiClient";
+import type { ExpenseRecord } from "../../api/sheet2ApiClient";
 import DeleteModal from "./deleteModal";
+import { useExpensesQuery } from "../../hooks/useExpensesQuery";
+import { expensesQueryKey } from "../../hooks/useExpensesQuery";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type BudgetTableProps = ExpenseRecord;
 
 export function BudgetTable() {
-  const [data, setData] = useState<BudgetTableProps[]>([]);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [expense, setExpense] = useState<BudgetTableProps | null>(null);
-  const [isListLoading, setIsListLoading] = useState(false);
   const [isSavingExpense, setIsSavingExpense] = useState(false);
   const [isDeletingExpense, setIsDeletingExpense] = useState(false);
 
@@ -35,6 +30,13 @@ export function BudgetTable() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const deferredSearchTerm = useDeferredValue(debouncedSearchTerm);
+  const queryClient = useQueryClient();
+
+  const {
+    data: data = [],
+    isLoading: isListLoading,
+    isError: hasLoadError,
+  } = useExpensesQuery(400);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
 
@@ -105,43 +107,11 @@ export function BudgetTable() {
     "Other",
   ];
 
-  const loadExpenses = useCallback(
-    async (
-      options: { signal?: AbortSignal; showListLoading?: boolean } = {},
-    ) => {
-      const { signal, showListLoading = true } = options;
-
-      try {
-        if (showListLoading) {
-          setIsListLoading(true);
-        }
-
-        const rows = await getExpenses({
-          limit: 200,
-          signal,
-        });
-
-        setData(rows);
-      } catch (error) {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          setErrorMessage("Error loading expenses");
-        }
-      } finally {
-        if (showListLoading) {
-          setIsListLoading(false);
-        }
-      }
-    },
-    [],
-  );
-
   useEffect(() => {
-    const controller = new AbortController();
-
-    void loadExpenses({ signal: controller.signal });
-
-    return () => controller.abort();
-  }, [loadExpenses]);
+    if (hasLoadError) {
+      setErrorMessage("Error loading expenses");
+    }
+  }, [hasLoadError]);
 
   useEffect(() => {
     let successTimeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -195,7 +165,7 @@ export function BudgetTable() {
   }
 
   async function handleExpenseSaved() {
-    await loadExpenses({ showListLoading: false });
+    await queryClient.invalidateQueries({ queryKey: expensesQueryKey });
   }
 
   return (
@@ -267,7 +237,7 @@ export function BudgetTable() {
             setErrorMessage={setErrorMessage}
             isDeleting={isDeletingExpense}
             setIsDeleting={setIsDeletingExpense}
-            loadExpenses={loadExpenses}
+            onDeleted={handleExpenseSaved}
             expense={expense}
           />
         </div>
