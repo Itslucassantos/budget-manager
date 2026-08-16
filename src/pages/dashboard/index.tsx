@@ -94,9 +94,14 @@ export function Dashboard() {
 
   useEffect(() => {
     if (hasNoFilteredExpenses) {
-      toast.error("No expenses match the selected filter.", {
-        duration: 5000,
-      });
+      toast.custom(
+        () => (
+          <div className="rounded-lg border border-blue-700 bg-blue-950 px-4 py-3 text-sm text-blue-100 shadow-lg">
+            No expenses match the selected filter.
+          </div>
+        ),
+        { duration: 3000 },
+      );
     }
   }, [hasNoFilteredExpenses]);
 

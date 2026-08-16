@@ -3,11 +3,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "../../components/input";
 import { NavLink, useNavigate } from "react-router-dom";
-import { FaGoogle, FaWallet } from "react-icons/fa6";
+import { FaWallet } from "react-icons/fa6";
 import { useContext, useState } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import toast from "react-hot-toast";
 import bcrypt from "bcryptjs";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 const schema = z.object({
   email: z
@@ -19,10 +21,17 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+type GoogleToken = {
+  sub: string;
+  name: string;
+  email: string;
+};
+
 export function Login() {
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -79,6 +88,31 @@ export function Login() {
     }
   }
 
+  async function handleGoogleSuccess(credentialResponse: {
+    credential?: string;
+  }) {
+    try {
+      if (!credentialResponse.credential) {
+        toast.error("Google login failed");
+        return;
+      }
+
+      const googleUser = jwtDecode<GoogleToken>(credentialResponse.credential);
+
+      const userData = {
+        uid: googleUser.sub,
+        name: googleUser.name,
+        email: googleUser.email,
+      };
+
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error("Error during Google login");
+    }
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       <div className="flex flex-col mb-4">
@@ -92,10 +126,14 @@ export function Login() {
       </div>
 
       <div className="flex flex-col gap-4 bg-zinc-900 rounded-lg p-4 sm:p-6 md:w-full md:max-w-lg">
-        <button className="flex items-center justify-center font-medium bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-400 duration-200">
-          <FaGoogle className="mr-2" width={13} height={13} />
-          Continue with Google
-        </button>
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => toast.error("Google login failed")}
+          width="100%"
+          text="continue_with"
+          shape="rectangular"
+          theme="filled_blue"
+        />
 
         <div className="text-center text-sm text-slate-100 font-medium">Or</div>
 
