@@ -1,5 +1,5 @@
-export const defaultSheet2BaseUrl =
-  "https://sheet2api.com/v1/tJMgSP9sQSSC/budget/P%C3%A1gina1";
+export const defaultSheet2BaseUrl = import.meta.env
+  .VITE_DEFAULT_SHEET2_BASE_URL;
 
 export function getSheet2BaseUrl(): string {
   if (typeof window === "undefined") {
