@@ -1,4 +1,4 @@
-import { createContext, useState, type ReactNode } from "react";
+import { createContext, useEffect, useState, type ReactNode } from "react";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -7,6 +7,7 @@ interface AuthProviderProps {
 type AuthContextData = {
   signed: boolean;
   user: UserProps | null;
+  loadingAuth: boolean;
   handleInfoUser: ({ name, email, uid }: UserProps) => void;
   setUser: React.Dispatch<React.SetStateAction<UserProps | null>>;
   handleLogout: () => void;
@@ -22,6 +23,21 @@ export const AuthContext = createContext({} as AuthContextData);
 
 function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<UserProps | null>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser) as UserProps);
+      } catch {
+        localStorage.removeItem("user");
+      }
+    }
+
+    setLoadingAuth(false);
+  }, []);
 
   function handleInfoUser({ name, email, uid }: UserProps) {
     setUser({
@@ -38,7 +54,14 @@ function AuthProvider({ children }: AuthProviderProps) {
 
   return (
     <AuthContext.Provider
-      value={{ signed: !!user, user, handleInfoUser, setUser, handleLogout }}
+      value={{
+        signed: !!user,
+        user,
+        loadingAuth,
+        handleInfoUser,
+        setUser,
+        handleLogout,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -7,7 +7,11 @@ interface PrivateProps {
 }
 
 export function Private({ children }: PrivateProps): any {
-  const { signed } = useContext(AuthContext);
+  const { signed, loadingAuth } = useContext(AuthContext);
+
+  if (loadingAuth) {
+    return <div />;
+  }
 
   if (!signed) {
     return <Navigate to="/" />;
